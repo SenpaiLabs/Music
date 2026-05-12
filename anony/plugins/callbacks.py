@@ -4,11 +4,16 @@
 
 
 import re
+from time import time
 
 from pyrogram import errors, filters, types
 
 from anony import anon, app, db, lang, queue, tg, yt
 from anony.helpers import admin_check, buttons, can_manage_vc
+
+
+_leaderboard_cooldown: dict[int, float] = {}
+LEADERBOARD_COOLDOWN_SECONDS = 3
 
 
 @app.on_callback_query(filters.regex("cancel_dl") & ~app.bl_users)
@@ -39,6 +44,20 @@ async def _controls(_, query: types.CallbackQuery):
 
     if action == "status":
         return await query.answer()
+
+    if action == "autoplay":
+        status = not await db.get_autoplay(chat_id)
+        await db.set_autoplay(chat_id, status)
+        autoplay_text = query.lang["autoplay_btn"].format(
+            query.lang["on"] if status else query.lang["off"]
+        )
+        await query.answer(
+            query.lang["autoplay_on"] if status else query.lang["autoplay_off"]
+        )
+        return await query.edit_message_reply_markup(
+            reply_markup=buttons.controls(chat_id, autoplay=autoplay_text)
+        )
+
     await query.answer(query.lang["processing"], show_alert=True)
 
     if action == "pause":
@@ -62,6 +81,7 @@ async def _controls(_, query: types.CallbackQuery):
             return await query.edit_message_reply_markup(
                 reply_markup=buttons.queue_markup(chat_id, query.lang["playing"], True)
             )
+        status = None
         reply = query.lang["play_resumed"].format(user)
 
     elif action == "skip":
@@ -85,6 +105,16 @@ async def _controls(_, query: types.CallbackQuery):
             pass
 
         msg = await app.send_message(chat_id=chat_id, text=query.lang["play_next"])
+        
+        if media.file_path == "downloading":
+            if getattr(media, "download_task", None):
+                try:
+                    media.file_path = await media.download_task
+                except Exception:
+                    media.file_path = None
+            else:
+                media.file_path = None
+
         if not media.file_path:
             media.file_path = await yt.download(media.id, video=media.video)
         media.message_id = msg.id
@@ -107,18 +137,17 @@ async def _controls(_, query: types.CallbackQuery):
             await query.message.reply_text(reply, quote=False)
             await query.message.delete()
         else:
+            source = query.message.caption or query.message.text
             mtext = re.sub(
                 r"\n\n<blockquote>.*?</blockquote>",
                 "",
-                query.message.caption.html or query.message.text.html,
+                source.html,
                 flags=re.DOTALL,
             )
-            keyboard = buttons.controls(
-                chat_id, status=status if action != "resume" else None
+            keyboard = buttons.controls(chat_id, status=status)
+            await query.edit_message_text(
+                f"{mtext}\n\n<blockquote>{reply}</blockquote>", reply_markup=keyboard
             )
-        await query.edit_message_text(
-            f"{mtext}\n\n<blockquote>{reply}</blockquote>", reply_markup=keyboard
-        )
     except Exception:
         pass
 
@@ -145,6 +174,109 @@ async def _help(_, query: types.CallbackQuery):
         text=query.lang[f"help_{data[1]}"],
         reply_markup=buttons.help_markup(query.lang, True),
     )
+
+
+@app.on_callback_query(filters.regex("leaderboard") & ~app.bl_users)
+@lang.language()
+async def _leaderboard_cb(_, query: types.CallbackQuery):
+    data = query.data.split()
+    action = data[1]
+
+    if action not in ("close", "back"):
+        now = time()
+        last = _leaderboard_cooldown.get(query.from_user.id, 0)
+        remaining = LEADERBOARD_COOLDOWN_SECONDS - (now - last)
+        if remaining > 0:
+            return await query.answer(
+                query.lang["leaderboard_cooldown"].format(int(remaining) + 1),
+                show_alert=True,
+            )
+        _leaderboard_cooldown[query.from_user.id] = now
+
+    if action == "close":
+        await query.answer()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+        return
+
+    if action == "back":
+        chat_id = int(data[2])
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["leaderboard_menu"],
+            reply_markup=buttons.leaderboard_markup(query.lang, chat_id),
+        )
+
+    if action == "users":
+        chat_id = int(data[2])
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["leaderboard_choose"],
+            reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+        )
+
+    if action == "groups":
+        await query.answer(query.lang["processing"])
+        top = await db.get_top_chats()
+        if not top:
+            return await query.edit_message_text(
+                text=query.lang["leaderboard_empty"],
+                reply_markup=buttons.leaderboard_result_markup(
+                    query.lang, query.message.chat.id, groups=True
+                ),
+            )
+
+        text = query.lang["leaderboard_groups_title"]
+        for i, entry in enumerate(top, start=1):
+            name = entry.get("title")
+            if not name:
+                try:
+                    name = (await app.get_chat(entry["_id"])).title
+                except Exception:
+                    name = str(entry["_id"])
+            text += query.lang["leaderboard_group_item"].format(i, name, entry["count"])
+
+        return await query.edit_message_text(
+            text=text,
+            reply_markup=buttons.leaderboard_result_markup(
+                query.lang, query.message.chat.id, groups=True
+            ),
+        )
+
+    if action == "period":
+        chat_id, period = int(data[2]), data[3]
+        await query.answer(query.lang["processing"])
+        top = await db.get_top_users(chat_id, period)
+        if not top:
+            return await query.edit_message_text(
+                text=query.lang["leaderboard_empty"],
+                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+            )
+
+        text = query.lang[f"leaderboard_{period}_title"]
+        for i, entry in enumerate(top, start=1):
+            mention = entry.get("name")
+            if not mention:
+                try:
+                    member = await app.get_chat_member(chat_id, entry["_id"])
+                    mention = member.user.mention
+                except Exception:
+                    mention = str(entry["_id"])
+            text += query.lang["leaderboard_user_item"].format(i, mention, entry["count"])
+
+        try:
+            return await query.edit_message_text(
+                text=text,
+                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+            )
+        except errors.RPCError:
+            safe_text = text.replace("tg://openmessage?user_id=", "tg://user?id=")
+            return await query.edit_message_text(
+                text=safe_text,
+                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+            )
 
 
 @app.on_callback_query(filters.regex("settings") & ~app.bl_users)
@@ -176,3 +308,4 @@ async def _settings_cb(_, query: types.CallbackQuery):
             chat_id,
         )
     )
+

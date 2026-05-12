@@ -3,10 +3,12 @@
 # This file is part of AnonXMusic
 
 
+from datetime import datetime, timezone
 from random import randint
 from time import time
 
-from pymongo import AsyncMongoClient
+from pymongo import AsyncMongoClient, UpdateOne
+from cachetools import TTLCache
 
 from anony import config, logger, userbot
 
@@ -19,20 +21,24 @@ class MongoDB:
         self.mongo = AsyncMongoClient(config.MONGO_URL, serverSelectionTimeoutMS=12500)
         self.db = self.mongo.Anon
 
-        self.admin_list = {}
+        self.song_cache_mongo = AsyncMongoClient(config.SONG_CACHE_MONGO_URI, serverSelectionTimeoutMS=12500)
+        self.song_cache_db = self.song_cache_mongo.AnonSongCache
+
+        self.admin_list = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
         self.active_calls = {}
         self.admin_play = []
+        self.autoplay = []
         self.blacklisted = []
         self.cmd_delete = []
         self.loop = {}
         self.notified = []
         self.cache = self.db.cache
-        self.logger = False
+        self.song_cache = self.song_cache_db.song_cache
 
         self.assistant = {}
         self.assistantdb = self.db.assistant
 
-        self.auth = {}
+        self.auth = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
         self.authdb = self.db.auth
 
         self.chats = []
@@ -41,8 +47,78 @@ class MongoDB:
         self.lang = {}
         self.langdb = self.db.lang
 
+        self.userstatsdb = self.db.user_stats
+        self.chatstatsdb = self.db.chat_stats
+
         self.users = []
         self.usersdb = self.db.users
+
+        self.afkdb = self.db.afk
+
+        self._stats_buffer = {"users": {}, "chats": {}}
+        self._flusher_task = None
+        self._admin_flusher_task = None
+
+    async def _admin_cache_flusher(self) -> None:
+        import asyncio
+        while True:
+            try:
+                await asyncio.sleep(900)  # 15 minutes
+                for chat_id in list(self.admin_list.keys()):
+                    try:
+                        await self.get_admins(chat_id, reload=True)
+                    except Exception:
+                        pass
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in admin cache flusher: {e}")
+
+    async def _stats_flusher(self) -> None:
+        import asyncio
+        while True:
+            try:
+                await asyncio.sleep(60)
+                await self.flush_stats()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in DB stats flusher: {e}")
+
+    async def flush_stats(self) -> None:
+        buffer = self._stats_buffer
+        self._stats_buffer = {"users": {}, "chats": {}}
+
+        if not buffer["users"] and not buffer["chats"]:
+            return
+
+        user_updates = [
+            UpdateOne(
+                {"_id": _id},
+                {"$inc": {"count": data["count"]}, "$set": data["set"]},
+                upsert=True
+            ) for _id, data in buffer["users"].items()
+        ]
+
+        chat_updates = [
+            UpdateOne(
+                {"_id": _id},
+                {"$inc": {"count": data["count"]}, "$set": data["set"]},
+                upsert=True
+            ) for _id, data in buffer["chats"].items()
+        ]
+
+        if user_updates:
+            try:
+                await self.userstatsdb.bulk_write(user_updates)
+            except Exception as e:
+                logger.error(f"Error in userstatsdb bulk_write: {e}")
+
+        if chat_updates:
+            try:
+                await self.chatstatsdb.bulk_write(chat_updates)
+            except Exception as e:
+                logger.error(f"Error in chatstatsdb bulk_write: {e}")
 
     async def connect(self) -> None:
         """Check if we can connect to the database.
@@ -50,18 +126,100 @@ class MongoDB:
         Raises:
             SystemExit: If the connection to the database fails.
         """
+        start = time()
+        
         try:
-            start = time()
             await self.mongo.admin.command("ping")
-            logger.info(f"Database connection successful. ({time() - start:.2f}s)")
-            await self.load_cache()
+            logger.info(f"Primary MongoDB connected. ({time() - start:.2f}s)")
         except Exception as e:
-            raise SystemExit(f"Database connection failed: {type(e).__name__}") from e
+            logger.error(f"Failed to connect to Primary MongoDB.")
+            raise SystemExit(f"Primary MongoDB connection failed: {type(e).__name__}") from e
+
+        start = time()
+        try:
+            await self.song_cache_mongo.admin.command("ping")
+            logger.info(f"Song Cache MongoDB connected. ({time() - start:.2f}s)")
+        except Exception as e:
+            logger.error(f"Failed to connect to Song Cache MongoDB.")
+            raise SystemExit(f"Song Cache MongoDB connection failed: {type(e).__name__}") from e
+            
+        try:
+            await self.load_cache()
+
+            import asyncio
+            from anony import tasks
+            self._flusher_task = asyncio.create_task(self._stats_flusher())
+            self._admin_flusher_task = asyncio.create_task(self._admin_cache_flusher())
+            tasks.append(self._flusher_task)
+            tasks.append(self._admin_flusher_task)
+        except Exception as e:
+            raise SystemExit(f"Failed to load cache or start flusher tasks: {type(e).__name__}") from e
 
     async def close(self) -> None:
         """Close the connection to the database."""
+        await self.flush_stats()
+        if self._flusher_task and not self._flusher_task.done():
+            self._flusher_task.cancel()
+        if self._admin_flusher_task and not self._admin_flusher_task.done():
+            self._admin_flusher_task.cancel()
+
         await self.mongo.close()
-        logger.info("Database connection closed.")
+        logger.info("Primary MongoDB connection closed.")
+        
+        await self.song_cache_mongo.close()
+        logger.info("Song Cache MongoDB connection closed.")
+
+    # SONG CACHE METHODS
+    async def get_song_cache(self, video_id: str, video: bool) -> dict | None:
+        doc = await self.song_cache.find_one({"_id": video_id})
+        if doc:
+            key = "video" if video else "audio"
+            return doc.get(key)
+        return None
+
+    async def save_song_cache(
+        self, video_id: str, video: bool, msg_id: int, file_id: str, title: str, duration: str, duration_sec: int
+    ) -> None:
+        key = "video" if video else "audio"
+        await self.song_cache.update_one(
+            {"_id": video_id},
+            {
+                "$set": {
+                    f"{key}.msg_id": msg_id,
+                    f"{key}.file_id": file_id,
+                    f"{key}.title": title,
+                    f"{key}.duration": duration,
+                    f"{key}.duration_sec": duration_sec,
+                },
+                "$setOnInsert": {f"{key}.play_count": 0}
+            },
+            upsert=True,
+        )
+
+    async def increment_play_count(self, video_id: str, video: bool) -> None:
+        key = "video" if video else "audio"
+        await self.song_cache.update_one(
+            {"_id": video_id},
+            {"$inc": {f"{key}.play_count": 1}}
+        )
+
+    async def get_top_songs(self, limit: int = 10) -> list:
+        pipeline = [
+            {
+                "$addFields": {
+                    "total_plays": {
+                        "$add": [
+                            {"$ifNull": ["$audio.play_count", 0]},
+                            {"$ifNull": ["$video.play_count", 0]}
+                        ]
+                    }
+                }
+            },
+            {"$sort": {"total_plays": -1}},
+            {"$limit": limit}
+        ]
+        cursor = await self.song_cache.aggregate(pipeline)
+        return [doc async for doc in cursor]
 
     # CACHE
     async def get_call(self, chat_id: int) -> bool:
@@ -79,7 +237,7 @@ class MongoDB:
         return bool(self.active_calls.get(chat_id, 0))
 
     async def get_admins(self, chat_id: int, reload: bool = False) -> list[int]:
-        from anony.helpers._admins import reload_admins
+        from anony.core.admins import reload_admins
 
         if chat_id not in self.admin_list or reload:
             self.admin_list[chat_id] = await reload_admins(chat_id)
@@ -278,6 +436,103 @@ class MongoDB:
             upsert=True,
         )
 
+    # AUTOPLAY METHODS
+    async def get_autoplay(self, chat_id: int) -> bool:
+        if chat_id not in self.autoplay:
+            doc = await self.chatsdb.find_one({"_id": chat_id})
+            if doc and doc.get("autoplay"):
+                self.autoplay.append(chat_id)
+        return chat_id in self.autoplay
+
+    async def set_autoplay(self, chat_id: int, status: bool) -> None:
+        if status and chat_id not in self.autoplay:
+            self.autoplay.append(chat_id)
+        elif not status and chat_id in self.autoplay:
+            self.autoplay.remove(chat_id)
+        await self.chatsdb.update_one(
+            {"_id": chat_id},
+            {"$set": {"autoplay": status}},
+            upsert=True,
+        )
+
+    # LEADERBOARD METHODS
+    async def add_play(
+        self, chat_id: int, user_id: int, name: str = None, chat_title: str = None
+    ) -> None:
+        now = datetime.now(timezone.utc)
+        day = now.strftime("%Y-%m-%d")
+        week = now.strftime("%G-W%V")
+
+        user_id_str = f"{chat_id}:{user_id}:{day}"
+        if user_id_str not in self._stats_buffer["users"]:
+            self._stats_buffer["users"][user_id_str] = {
+                "count": 0,
+                "set": {
+                    "chat_id": chat_id,
+                    "user_id": user_id,
+                    "day": day,
+                    "week": week,
+                }
+            }
+
+        self._stats_buffer["users"][user_id_str]["count"] += 1
+        if name:
+            self._stats_buffer["users"][user_id_str]["set"]["name"] = name
+
+        chat_id_str = f"{chat_id}:{day}"
+        if chat_id_str not in self._stats_buffer["chats"]:
+            self._stats_buffer["chats"][chat_id_str] = {
+                "count": 0,
+                "set": {
+                    "chat_id": chat_id,
+                    "day": day,
+                    "week": week,
+                }
+            }
+
+        self._stats_buffer["chats"][chat_id_str]["count"] += 1
+        if chat_title:
+            self._stats_buffer["chats"][chat_id_str]["set"]["title"] = chat_title
+
+    async def get_top_users(self, chat_id: int, period: str) -> list[dict]:
+        match = {"chat_id": chat_id}
+        if period == "daily":
+            match["day"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        elif period == "weekly":
+            match["week"] = datetime.now(timezone.utc).strftime("%G-W%V")
+
+        pipeline = [
+            {"$match": match},
+            {"$sort": {"day": 1}},
+            {
+                "$group": {
+                    "_id": "$user_id",
+                    "count": {"$sum": "$count"},
+                    "name": {"$last": "$name"},
+                }
+            },
+            {"$sort": {"count": -1}},
+            {"$limit": 10},
+        ]
+        cursor = await self.userstatsdb.aggregate(pipeline)
+        return [doc async for doc in cursor]
+
+    async def get_top_chats(self) -> list[dict]:
+        pipeline = [
+            {"$sort": {"day": 1}},
+            {
+                "$group": {
+                    "_id": "$chat_id",
+                    "count": {"$sum": "$count"},
+                    "title": {"$last": "$title"},
+                }
+            },
+            {"$sort": {"count": -1}},
+            {"$limit": 10},
+        ]
+        cursor = await self.chatstatsdb.aggregate(pipeline)
+        return [doc async for doc in cursor]
+
     # SUDO METHODS
     async def add_sudo(self, user_id: int) -> None:
         await self.cache.update_one(
@@ -311,6 +566,21 @@ class MongoDB:
         if not self.users:
             self.users.extend([user["_id"] async for user in self.usersdb.find()])
         return self.users
+
+    # AFK METHODS
+    async def add_afk(self, user_id: int, mode: dict) -> None:
+        await self.afkdb.update_one(
+            {"_id": user_id},
+            {"$set": mode},
+            upsert=True,
+        )
+
+    async def remove_afk(self, user_id: int) -> None:
+        await self.afkdb.delete_one({"_id": user_id})
+
+    async def is_afk(self, user_id: int) -> dict | None:
+        return await self.afkdb.find_one({"_id": user_id})
+
 
 
     async def migrate_coll(self) -> None:
@@ -367,3 +637,4 @@ class MongoDB:
         await self.get_blacklisted(True)
         await self.get_logger()
         logger.info("Database cache loaded.")
+

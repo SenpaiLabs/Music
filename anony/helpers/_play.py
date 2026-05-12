@@ -8,7 +8,7 @@ import asyncio
 from pyrogram import enums, errors, types
 
 from anony import app, config, db, logger, queue, yt
-from anony.helpers import utils
+from anony.helpers import utils, format_exception
 
 
 def checkUB(play):
@@ -87,33 +87,46 @@ def checkUB(play):
                         return await m.reply_text(m.lang["admin_required"])
                     except Exception as ex:
                         return await m.reply_text(
-                            m.lang["play_invite_error"].format(type(ex).__name__)
+                            m.lang["play_invite_error"].format(format_exception(ex))
                         )
 
                 umm = await m.reply_text(m.lang["play_invite"].format(app.name))
                 await asyncio.sleep(2)
-                try:
-                    await client.join_chat(invite_link)
-                except errors.UserAlreadyParticipant:
-                    pass
-                except errors.InviteRequestSent:
-                    await asyncio.sleep(2)
+                for _ in range(2):
                     try:
-                        await app.approve_chat_join_request(chat_id, client.id)
-                    except errors.HideRequesterMissing:
-                        pass
+                        await client.join_chat(invite_link)
+                        break
+                    except errors.FloodWait as fw:
+                        logger.warning(f"FloodWait on userbot join: sleeping {fw.value}s")
+                        await asyncio.sleep(fw.value + 1)
+                    except errors.UserAlreadyParticipant:
+                        break
+                    except errors.InviteRequestSent:
+                        await asyncio.sleep(2)
+                        try:
+                            await app.approve_chat_join_request(chat_id, client.id)
+                        except errors.HideRequesterMissing:
+                            pass
+                        except Exception as ex:
+                            return await umm.edit_text(
+                                m.lang["play_invite_error"].format(format_exception(ex))
+                            )
+                        break
                     except Exception as ex:
+                        logger.error(f"Error joining chat - {chat_id}: {ex}")
                         return await umm.edit_text(
-                            m.lang["play_invite_error"].format(type(ex).__name__)
+                            m.lang["play_invite_error"].format(format_exception(ex))
                         )
-                except Exception as ex:
-                    logger.error(f"Error joining chat - {chat_id}: {ex}")
+                else:
                     return await umm.edit_text(
-                        m.lang["play_invite_error"].format(type(ex).__name__)
+                        m.lang["play_invite_error"].format("FloodWait Timeout")
                     )
 
                 await umm.delete()
-                await client.resolve_peer(chat_id)
+                try:
+                    await client.resolve_peer(chat_id)
+                except Exception:
+                    pass
 
         if await db.get_cmd_delete(chat_id):
             try:
@@ -124,3 +137,4 @@ def checkUB(play):
         return await play(_, m, force, m3u8, video, url)
 
     return wrapper
+
