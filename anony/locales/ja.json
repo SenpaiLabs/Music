@@ -10,6 +10,10 @@
     "auth_list": "<u><b>{0} の認可されたユーザー一覧:</b></u>\n",
     "auth_is_admin": "ユーザーはすでに<b>管理者</b>であり、承認済みユーザーに追加できません。",
     "auto_left": "待って、見て、あくびをして...そしてビデオチャットから退出しました。",
+    "autoplay_status": "<b>自動再生は現在:</b> {0}",
+    "autoplay_on": "このチャットで自動再生が有効になりました。",
+    "autoplay_off": "このチャットで自動再生が無効になりました。",
+    "autoplay_usage": "<b>使用方法:</b>\n\n<code>/autoplay [on|off]</code>",
     "bl_usage": "<b>使用法:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "チャットIDとユーザーIDのみがサポートされています。",
     "bl_already": "このチャットはすでにブラックリストに登録されています。",
@@ -130,6 +134,8 @@
     "cancel": "キャンセル",
     "channel": "チャンネル",
     "close": "閉じる",
+    "disabled": "無効",
+    "enabled": "有効",
     "forward": "前方へ",
     "help": "ヘルプ",
     "language": "言語",
@@ -153,3 +159,4 @@
     "help_7": "統計",
     "help_8": "Sudoers"
 }
+

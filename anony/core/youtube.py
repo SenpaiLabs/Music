@@ -110,6 +110,81 @@ class YouTube:
             pass
         return tracks
 
+    async def autoplay(self, video_id: str, history: set, video: bool = False) -> Track | None:
+        cookie = self.get_cookies()
+        flat_opts = {
+            "extract_flat": True,
+            "quiet": True,
+            "no_warnings": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "cookiefile": cookie,
+            "playlistend": 10,
+        }
+
+        def _related():
+            url = f"{self.base}{video_id}&list=RD{video_id}"
+            with yt_dlp.YoutubeDL(flat_opts) as ydl:
+                try:
+                    return ydl.extract_info(url, download=False)
+                except Exception:
+                    return None
+
+        info = await asyncio.to_thread(_related)
+        entries = (info or {}).get("entries") or []
+
+        next_id = next(
+            (
+                e.get("id") for e in entries
+                if e.get("id") and e.get("id") != video_id and e.get("id") not in history
+            ),
+            None,
+        )
+        if not next_id:
+            return None
+
+        info_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "cookiefile": cookie,
+            "skip_download": True,
+        }
+
+        def _details():
+            with yt_dlp.YoutubeDL(info_opts) as ydl:
+                try:
+                    return ydl.extract_info(self.base + next_id, download=False)
+                except Exception:
+                    return None
+
+        data = await asyncio.to_thread(_details)
+        if not data:
+            return None
+
+        duration_sec = int(data.get("duration") or 0)
+        return Track(
+            id=next_id,
+            channel_name=data.get("uploader"),
+            duration=self.format_duration(duration_sec),
+            duration_sec=duration_sec,
+            message_id=0,
+            title=(data.get("title") or "Unknown")[:25],
+            thumbnail=data.get("thumbnail") or "",
+            url=self.base + next_id,
+            view_count=str(data.get("view_count") or ""),
+            video=video,
+        )
+
+    @staticmethod
+    def format_duration(seconds: int) -> str:
+        if seconds <= 0:
+            return "0:00"
+        h, rem = divmod(seconds, 3600)
+        m, s = divmod(rem, 60)
+        return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
     async def download(self, video_id: str, video: bool = False) -> str | None:
         url = self.base + video_id
         ext = "mp4" if video else "webm"
@@ -154,3 +229,4 @@ class YouTube:
             return filename
 
         return await asyncio.to_thread(_download)
+

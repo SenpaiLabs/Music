@@ -10,6 +10,10 @@
     "auth_list": "<u><b>Liste des utilisateurs autorisés dans {0} :</b></u>\n",
     "auth_is_admin": "L'utilisateur est déjà un <b>administrateur</b> et ne peut pas être ajouté aux utilisateurs autorisés.",
     "auto_left": "J'ai attendu, j'ai regardé, j'ai bâillé... puis j'ai quitté le chat vidéo.",
+    "autoplay_status": "<b>La lecture automatique est actuellement :</b> {0}",
+    "autoplay_on": "La lecture automatique a été activée pour ce chat.",
+    "autoplay_off": "La lecture automatique a été désactivée pour ce chat.",
+    "autoplay_usage": "<b>Utilisation :</b>\n\n<code>/autoplay [on|off]</code>",
     "bl_usage": "<b>Utilisation :</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Seuls les ID de chat et les ID d'utilisateur sont pris en charge.",
     "bl_already": "Ce chat est déjà sur la liste noire.",
@@ -130,6 +134,8 @@
     "cancel": "Annuler",
     "channel": "Canal",
     "close": "Fermer",
+    "disabled": "Désactivé",
+    "enabled": "Activé",
     "forward": "en avant",
     "help": "Aide",
     "language": "Langue",
@@ -153,3 +159,4 @@
     "help_7": "Statistiques",
     "help_8": "Sudoers"
 }
+

@@ -10,6 +10,10 @@
     "auth_list": "<u><b>Lista de usuários autorizados em {0}:</b></u>\n",
     "auth_is_admin": "O usuário já é um <b>administrador</b> e não pode ser adicionado aos usuários autorizados.",
     "auto_left": "Eu esperei, eu assisti, eu bocejei... e então eu saí do chat de vídeo.",
+    "autoplay_status": "<b>A reprodução automática está atualmente:</b> {0}",
+    "autoplay_on": "A reprodução automática foi ativada para este chat.",
+    "autoplay_off": "A reprodução automática foi desativada para este chat.",
+    "autoplay_usage": "<b>Uso:</b>\n\n<code>/autoplay [on|off]</code>",
     "bl_usage": "<b>Uso:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Apenas IDs de bate-papo e IDs de usuário são suportados.",
     "bl_already": "Este bate-papo já está na lista negra.",
@@ -130,6 +134,8 @@
     "cancel": "Cancelar",
     "channel": "Canal",
     "close": "Fechar",
+    "disabled": "Desativado",
+    "enabled": "Ativado",
     "forward": "para frente",
     "help": "Ajuda",
     "language": "Idioma",
@@ -153,3 +159,4 @@
     "help_7": "Estatísticas",
     "help_8": "Sudoers"
 }
+
