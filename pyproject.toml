@@ -15,5 +15,5 @@ dependencies = [
     "pymongo>=4.16.0",
     "pytgcrypto>=1.2.11",
     "python-dotenv~=1.2.1",
-    "yt-dlp[default]>=2026.3.17",
+    "yt-dlp[default]>=2026.7.4",
 ]
