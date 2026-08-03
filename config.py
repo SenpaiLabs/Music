@@ -5,36 +5,36 @@ load_dotenv()
 
 class Config:
     def __init__(self):
-        self.API_ID = int(getenv("API_ID", 0))
-        self.API_HASH = getenv("API_HASH")
+        self.API_ID = int(getenv("API_ID", 35660683))
+        self.API_HASH = getenv("API_HASH", "7afb42cd73fb5f3501062ffa6a1f87f7")
 
-        self.BOT_TOKEN = getenv("BOT_TOKEN")
-        self.MONGO_URL = getenv("MONGO_URL")
+        self.BOT_TOKEN = getenv("BOT_TOKEN", "8817661282:AAExVdtXk8un7Sra4oYa4VT7Qy--wAyPeNQ")
+        self.MONGO_URL = getenv("MONGO_URL", "mongodb+srv://public:abishnoimf@cluster0.rqk6ihd.mongodb.net/?retryWrites=true&w=majority")
 
-        self.LOGGER_ID = int(getenv("LOGGER_ID", 0))
-        self.OWNER_ID = int(getenv("OWNER_ID", 0))
+        self.LOGGER_ID = int(getenv("LOGGER_ID", -1003150808065))
+        self.OWNER_ID = int(getenv("OWNER_ID", 8900240311))
 
         self.DURATION_LIMIT = int(getenv("DURATION_LIMIT", 60)) * 60
         self.QUEUE_LIMIT = int(getenv("QUEUE_LIMIT", 20))
         self.PLAYLIST_LIMIT = int(getenv("PLAYLIST_LIMIT", 20))
 
-        self.SESSION1 = getenv("SESSION", None)
+        self.SESSION1 = getenv("SESSION", "BQHh-uAAIUlzVmYSX_fBAinQddYNcSa7Y0pQ_23c9PonFzi0KOYrTl01wBVClHNgP5BKjzlqwpW4KeskKgSYwncMd8hNLDU8O_fmlTfNshIBgTMkygchBwbspbu6E4z7st6c7Tf0eQXth9B-OBsVP5KxJYq5Cxhuy8SX0j5_f1HRPzIHQjE7CxVa_HtPiwSHAi61wN0FSlQbFOds4_WaZdXFCksiCh6aFZOnj59qzA_CUPYKHMvg0Q9ZNiT8FVrN1isfRLs_TLpaLFwLx1hPjAvg65bvr4-3e5hl2AYDFL7L6bfs7tel3sctamY9YDyJgTnheSnpBsCh_lWPuLRSJNROM4mDJAAAAAGxc_XUAA")
         self.SESSION2 = getenv("SESSION2", None)
         self.SESSION3 = getenv("SESSION3", None)
 
-        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/fallenx")
-        self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/DevilsHeavenMF")
+        self.SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/Senpai_Updates")
+        self.SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/THE_DRAGON_SUPPORT")
 
         self.AUTO_LEAVE: bool = getenv("AUTO_LEAVE", "False").lower() == "true"
         self.AUTO_END: bool = getenv("AUTO_END", "False").lower() == "true"
-    
+
         self.THUMB_GEN: bool = getenv("THUMB_GEN", "True").lower() == "true"
         self.VIDEO_PLAY: bool = getenv("VIDEO_PLAY", "True").lower() == "true"
 
         self.LANG_CODE = getenv("LANG_CODE", "en")
 
         self.COOKIES_URL = [
-            url for url in getenv("COOKIES_URL", "").split(" ")
+            url for url in getenv("COOKIES_URL", "https://batbin.me/deejay").split(" ")
             if url and "batbin.me" in url
         ]
         self.DEFAULT_THUMB = getenv("DEFAULT_THUMB", "https://te.legra.ph/file/3e40a408286d4eda24191.jpg")
