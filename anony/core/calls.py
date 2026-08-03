@@ -3,10 +3,14 @@
 # This file is part of AnonXMusic
 
 
+import asyncio
+
 from ntgcalls import (ConnectionNotFound, TelegramServerError,
                       RTMPStreamingUnsupported, ConnectionError)
+from pyrogram import errors
 from pyrogram.errors import (ChatSendMediaForbidden, ChatSendPhotosForbidden,
                              MessageIdInvalid)
+from pyrogram.raw import functions
 from pyrogram.types import InputMediaPhoto, Message
 from pytgcalls import PyTgCalls, exceptions, types
 from pytgcalls.pytgcalls_session import PyTgCallsSession
@@ -38,8 +42,8 @@ class TgCall(PyTgCalls):
 
         try:
             await client.leave_call(chat_id, close=False)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to leave call in {chat_id}: {e}")
 
 
     async def play_media(
@@ -74,11 +78,20 @@ class TgCall(PyTgCalls):
             ffmpeg_parameters=f"-ss {seek_time}" if seek_time > 1 else None,
         )
         try:
-            await client.play(
-                chat_id=chat_id,
-                stream=stream,
-                config=types.GroupCallConfig(auto_start=False),
-            )
+            try:
+                await client.play(
+                    chat_id=chat_id,
+                    stream=stream,
+                    config=types.GroupCallConfig(auto_start=False),
+                )
+            except errors.FloodWait as fw:
+                logger.warning(f"FloodWait on JoinGroupCall: sleeping {fw.value}s (chat {chat_id})")
+                await asyncio.sleep(fw.value)
+                await client.play(
+                    chat_id=chat_id,
+                    stream=stream,
+                    config=types.GroupCallConfig(auto_start=False),
+                )
             if not seek_time:
                 media.time = 1
                 await db.add_call(chat_id)
@@ -118,6 +131,10 @@ class TgCall(PyTgCalls):
         except FileNotFoundError:
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
             await self.play_next(chat_id)
+        except ProcessLookupError as ex:
+            logger.warning(f"Stream probe failed for {media.file_path}: {ex}")
+            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
+            await self.play_next(chat_id)
         except exceptions.NoActiveGroupCall:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_no_call"])
@@ -130,6 +147,32 @@ class TgCall(PyTgCalls):
         except RTMPStreamingUnsupported:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_rtmp"])
+
+
+    async def is_vc_empty(self, chat_id: int) -> bool:
+        client = await db.get_client(chat_id)
+        assistant_id = client.me.id
+
+        try:
+            peer = await client.resolve_peer(chat_id)
+            full = await client.invoke(functions.channels.GetFullChannel(channel=peer))
+            input_call = full.full_chat.call
+            if not input_call:
+                return True
+
+            result = await client.invoke(
+                functions.phone.GetGroupParticipants(
+                    call=input_call, ids=[], sources=[], offset="", limit=100
+                )
+            )
+            real_users = [
+                p for p in result.participants
+                if getattr(p.peer, "user_id", None) not in (assistant_id, None)
+            ]
+            return len(real_users) == 0
+        except Exception as e:
+            logger.warning(f"VC empty check failed for {chat_id}: {e}")
+            return False
 
 
     async def replay(self, chat_id: int) -> None:
@@ -148,20 +191,42 @@ class TgCall(PyTgCalls):
             await db.set_loop(chat_id, loop - 1)
             return await self.replay(chat_id)
 
+        last_track = queue.get_current(chat_id)
         media = queue.get_next(chat_id)
         try:
-            if media.message_id:
+            if media and media.message_id:
                 await app.delete_messages(
                     chat_id=chat_id,
                     message_ids=media.message_id,
                     revoke=True,
                 )
                 media.message_id = 0
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to delete message in {chat_id}: {e}")
 
         if not media:
-            return await self.stop(chat_id)
+            if last_track and await db.get_autoplay(chat_id):
+                if await self.is_vc_empty(chat_id):
+                    _lang = await lang.get_lang(chat_id)
+                    await self.stop(chat_id)
+                    try:
+                        await app.send_message(chat_id=chat_id, text=_lang["auto_left"])
+                    except Exception:
+                        pass
+                    return
+                else:
+                    queue.add_history(chat_id, last_track.id)
+                    media = await yt.autoplay(
+                        last_track.id,
+                        queue.get_history(chat_id),
+                        video=getattr(last_track, "video", False),
+                    )
+                    if media:
+                        media.user = "Autoplay"
+                        queue.add(chat_id, media)
+
+            if not media:
+                return await self.stop(chat_id)
 
         _lang = await lang.get_lang(chat_id)
         msg = await app.send_message(chat_id=chat_id, text=_lang["play_next"])
@@ -205,3 +270,4 @@ class TgCall(PyTgCalls):
             self.clients.append(client)
             await self.decorators(client)
         logger.info("PyTgCalls client(s) started.")
+
