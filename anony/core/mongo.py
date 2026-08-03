@@ -22,6 +22,7 @@ class MongoDB:
         self.admin_list = {}
         self.active_calls = {}
         self.admin_play = []
+        self.autoplay = []
         self.blacklisted = []
         self.cmd_delete = []
         self.loop = {}
@@ -278,6 +279,25 @@ class MongoDB:
             upsert=True,
         )
 
+    # AUTOPLAY METHODS
+    async def get_autoplay(self, chat_id: int) -> bool:
+        if chat_id not in self.autoplay:
+            doc = await self.chatsdb.find_one({"_id": chat_id})
+            if doc and doc.get("autoplay"):
+                self.autoplay.append(chat_id)
+        return chat_id in self.autoplay
+
+    async def set_autoplay(self, chat_id: int, status: bool) -> None:
+        if status and chat_id not in self.autoplay:
+            self.autoplay.append(chat_id)
+        elif not status and chat_id in self.autoplay:
+            self.autoplay.remove(chat_id)
+        await self.chatsdb.update_one(
+            {"_id": chat_id},
+            {"$set": {"autoplay": status}},
+            upsert=True,
+        )
+
     # SUDO METHODS
     async def add_sudo(self, user_id: int) -> None:
         await self.cache.update_one(
@@ -367,3 +387,4 @@ class MongoDB:
         await self.get_blacklisted(True)
         await self.get_logger()
         logger.info("Database cache loaded.")
+

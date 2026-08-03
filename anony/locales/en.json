@@ -10,6 +10,10 @@
     "auth_list": "<u><b>List of authorized users in {0}:</b></u>\n",
     "auth_is_admin": "The user is already an <b>admin</b> and can't be added to authorized users.",
     "auto_left": "I waited, I watched, I yawned... and then I left the video chat.",
+    "autoplay_status": "<b>Autoplay is currently:</b> {0}",
+    "autoplay_on": "Autoplay has been enabled for this chat.",
+    "autoplay_off": "Autoplay has been disabled for this chat.",
+    "autoplay_usage": "<b>Usage:</b>\n\n<code>/autoplay [on|off]</code>",
     "bl_usage": "<b>Usage:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Only chat IDs and user IDs are supported.",
     "bl_already": "This chat is already blacklisted.",
@@ -130,6 +134,8 @@
     "cancel": "Cancel",
     "channel": "Channel",
     "close": "Close",
+    "disabled": "Disabled",
+    "enabled": "Enabled",
     "forward": "forward",
     "help": "Help",
     "language": "Language",
@@ -153,3 +159,4 @@
     "help_7": "Stats",
     "help_8": "Sudoers"
 }
+

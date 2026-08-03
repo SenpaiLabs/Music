@@ -10,6 +10,10 @@
     "auth_list": "<u><b>{0} içindeki yetkili kullanıcıların listesi:</b></u>\n",
     "auth_is_admin": "Kullanıcı zaten bir <b>yönetici</b> ve yetkili kullanıcılara eklenemez.",
     "auto_left": "Bekledim, izledim, esnedim... ve sonra görüntülü sohbetten ayrıldım.",
+    "autoplay_status": "<b>Otomatik oynatma şu anda:</b> {0}",
+    "autoplay_on": "Bu sohbet için otomatik oynatma etkinleştirildi.",
+    "autoplay_off": "Bu sohbet için otomatik oynatma devre dışı bırakıldı.",
+    "autoplay_usage": "<b>Kullanım:</b>\n\n<code>/autoplay [on|off]</code>",
     "bl_usage": "<b>Kullanım:</b>\n\n/{0} [sohbet_kimliği|kullanıcı_kimliği]",
     "bl_invalid": "Yalnızca sohbet kimlikleri ve kullanıcı kimlikleri desteklenir.",
     "bl_already": "Bu sohbet zaten kara listede.",
@@ -130,6 +134,8 @@
     "cancel": "İptal",
     "channel": "Kanal",
     "close": "Kapat",
+    "disabled": "Devre dışı",
+    "enabled": "Etkin",
     "forward": "ileri sar",
     "help": "Yardım",
     "language": "Dil",
@@ -153,3 +159,4 @@
     "help_7": "İstatistikler",
     "help_8": "Sudo Kullanıcıları"
 }
+
