@@ -14,6 +14,7 @@
     "autoplay_on": "このチャットで自動再生が有効になりました。",
     "autoplay_off": "このチャットで自動再生が無効になりました。",
     "autoplay_usage": "<b>使用方法:</b>\n\n<code>/autoplay [on|off]</code>",
+    "autoplay_btn": "自動再生: {}",
     "bl_usage": "<b>使用法:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "チャットIDとユーザーIDのみがサポートされています。",
     "bl_already": "このチャットはすでにブラックリストに登録されています。",
@@ -149,6 +150,8 @@
     "cancel": "キャンセル",
     "channel": "チャンネル",
     "close": "閉じる",
+    "off": "オフ",
+    "on": "オン",
     "disabled": "無効",
     "enabled": "有効",
     "forward": "前方へ",
@@ -173,4 +176,3 @@
     "help_7": "統計",
     "help_8": "Sudoers"
 }
-

@@ -69,6 +69,7 @@ async def update_timer(length=10, sleep=12):
                 remaining = max(duration - played, 0)
                 pos = min(int((played / duration) * length), length - 1)
                 timer = "—" * pos + "◉" + "—" * (length - pos - 1)
+                autoplay = None
 
                 if remaining <= 30:
                     next = queue.get_next(chat_id, check=True)
@@ -82,16 +83,21 @@ async def update_timer(length=10, sleep=12):
                         timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {timer} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
                     else:
                         timer = None
+                        _lang = await lang.get_lang(chat_id)
+                        status = await db.get_autoplay(chat_id)
+                        autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
+                            _lang.get("on", "On") if status else _lang.get("off", "Off")
+                        )
                     remove = False
 
-                if not timer and not remove:
+                if not timer and not autoplay and not remove:
                     continue
 
                 await app.edit_message_reply_markup(
                     chat_id=chat_id,
                     message_id=message_id,
                     reply_markup=buttons.controls(
-                        chat_id=chat_id, timer=timer, remove=remove
+                        chat_id=chat_id, timer=timer, autoplay=autoplay, remove=remove
                     ),
                 )
             except asyncio.CancelledError:
@@ -131,3 +137,4 @@ if config.AUTO_LEAVE:
     tasks.append(asyncio.create_task(auto_leave()))
 tasks.append(asyncio.create_task(track_time()))
 tasks.append(asyncio.create_task(update_timer()))
+

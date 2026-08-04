@@ -14,6 +14,7 @@
     "autoplay_on": "La lecture automatique a été activée pour ce chat.",
     "autoplay_off": "La lecture automatique a été désactivée pour ce chat.",
     "autoplay_usage": "<b>Utilisation :</b>\n\n<code>/autoplay [on|off]</code>",
+    "autoplay_btn": "Lecture automatique : {}",
     "bl_usage": "<b>Utilisation :</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Seuls les ID de chat et les ID d'utilisateur sont pris en charge.",
     "bl_already": "Ce chat est déjà sur la liste noire.",
@@ -149,6 +150,8 @@
     "cancel": "Annuler",
     "channel": "Canal",
     "close": "Fermer",
+    "off": "Désactivé",
+    "on": "Activé",
     "disabled": "Désactivé",
     "enabled": "Activé",
     "forward": "en avant",
@@ -173,4 +176,3 @@
     "help_7": "Statistiques",
     "help_8": "Sudoers"
 }
-
