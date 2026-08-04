@@ -62,6 +62,7 @@ async def _controls(_, query: types.CallbackQuery):
             return await query.edit_message_reply_markup(
                 reply_markup=buttons.queue_markup(chat_id, query.lang["playing"], True)
             )
+        status = None
         reply = query.lang["play_resumed"].format(user)
 
     elif action == "skip":
@@ -107,18 +108,17 @@ async def _controls(_, query: types.CallbackQuery):
             await query.message.reply_text(reply, quote=False)
             await query.message.delete()
         else:
+            source = query.message.caption or query.message.text
             mtext = re.sub(
                 r"\n\n<blockquote>.*?</blockquote>",
                 "",
-                query.message.caption.html or query.message.text.html,
+                source.html,
                 flags=re.DOTALL,
             )
-            keyboard = buttons.controls(
-                chat_id, status=status if action != "resume" else None
+            keyboard = buttons.controls(chat_id, status=status)
+            await query.edit_message_text(
+                f"{mtext}\n\n<blockquote>{reply}</blockquote>", reply_markup=keyboard
             )
-        await query.edit_message_text(
-            f"{mtext}\n\n<blockquote>{reply}</blockquote>", reply_markup=keyboard
-        )
     except Exception:
         pass
 
@@ -176,3 +176,4 @@ async def _settings_cb(_, query: types.CallbackQuery):
             chat_id,
         )
     )
+
