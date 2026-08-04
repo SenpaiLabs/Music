@@ -14,6 +14,7 @@
     "autoplay_on": "A reprodução automática foi ativada para este chat.",
     "autoplay_off": "A reprodução automática foi desativada para este chat.",
     "autoplay_usage": "<b>Uso:</b>\n\n<code>/autoplay [on|off]</code>",
+    "autoplay_btn": "Reprodução automática: {}",
     "bl_usage": "<b>Uso:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Apenas IDs de bate-papo e IDs de usuário são suportados.",
     "bl_already": "Este bate-papo já está na lista negra.",
@@ -149,6 +150,8 @@
     "cancel": "Cancelar",
     "channel": "Canal",
     "close": "Fechar",
+    "off": "Desativado",
+    "on": "Ativado",
     "disabled": "Desativado",
     "enabled": "Ativado",
     "forward": "para frente",
@@ -173,4 +176,3 @@
     "help_7": "Estatísticas",
     "help_8": "Sudoers"
 }
-

@@ -22,6 +22,7 @@ class Inline:
         chat_id: int,
         status: str = None,
         timer: str = None,
+        autoplay: str = None,
         remove: bool = False,
     ) -> types.InlineKeyboardMarkup:
         keyboard = []
@@ -32,6 +33,10 @@ class Inline:
         elif timer:
             keyboard.append(
                 [self.ikb(text=timer, callback_data=f"controls status {chat_id}")]
+            )
+        elif autoplay:
+            keyboard.append(
+                [self.ikb(text=autoplay, callback_data=f"controls autoplay {chat_id}")]
             )
 
         if not remove:
@@ -207,5 +212,3 @@ class Inline:
                 ],
             ]
         )
-
-

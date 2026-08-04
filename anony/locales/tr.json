@@ -14,6 +14,7 @@
     "autoplay_on": "Bu sohbet için otomatik oynatma etkinleştirildi.",
     "autoplay_off": "Bu sohbet için otomatik oynatma devre dışı bırakıldı.",
     "autoplay_usage": "<b>Kullanım:</b>\n\n<code>/autoplay [on|off]</code>",
+    "autoplay_btn": "Otomatik oynatma: {}",
     "bl_usage": "<b>Kullanım:</b>\n\n/{0} [sohbet_kimliği|kullanıcı_kimliği]",
     "bl_invalid": "Yalnızca sohbet kimlikleri ve kullanıcı kimlikleri desteklenir.",
     "bl_already": "Bu sohbet zaten kara listede.",
@@ -149,6 +150,8 @@
     "cancel": "İptal",
     "channel": "Kanal",
     "close": "Kapat",
+    "off": "Kapalı",
+    "on": "Açık",
     "disabled": "Devre dışı",
     "enabled": "Etkin",
     "forward": "ileri sar",
@@ -173,4 +176,3 @@
     "help_7": "İstatistikler",
     "help_8": "Sudo Kullanıcıları"
 }
-

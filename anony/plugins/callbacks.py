@@ -39,6 +39,20 @@ async def _controls(_, query: types.CallbackQuery):
 
     if action == "status":
         return await query.answer()
+
+    if action == "autoplay":
+        status = not await db.get_autoplay(chat_id)
+        await db.set_autoplay(chat_id, status)
+        autoplay_text = query.lang["autoplay_btn"].format(
+            query.lang["on"] if status else query.lang["off"]
+        )
+        await query.answer(
+            query.lang["autoplay_on"] if status else query.lang["autoplay_off"]
+        )
+        return await query.edit_message_reply_markup(
+            reply_markup=buttons.controls(chat_id, autoplay=autoplay_text)
+        )
+
     await query.answer(query.lang["processing"], show_alert=True)
 
     if action == "pause":
@@ -256,5 +270,3 @@ async def _settings_cb(_, query: types.CallbackQuery):
             chat_id,
         )
     )
-
-

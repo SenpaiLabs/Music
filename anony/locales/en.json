@@ -14,6 +14,7 @@
     "autoplay_on": "Autoplay has been enabled for this chat.",
     "autoplay_off": "Autoplay has been disabled for this chat.",
     "autoplay_usage": "<b>Usage:</b>\n\n<code>/autoplay [on|off]</code>",
+    "autoplay_btn": "Autoplay: {}",
     "bl_usage": "<b>Usage:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Only chat IDs and user IDs are supported.",
     "bl_already": "This chat is already blacklisted.",
@@ -149,6 +150,8 @@
     "cancel": "Cancel",
     "channel": "Channel",
     "close": "Close",
+    "off": "Off",
+    "on": "On",
     "disabled": "Disabled",
     "enabled": "Enabled",
     "forward": "forward",
@@ -173,4 +176,3 @@
     "help_7": "Stats",
     "help_8": "Sudoers"
 }
-
