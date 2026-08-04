@@ -147,6 +147,86 @@ async def _help(_, query: types.CallbackQuery):
     )
 
 
+@app.on_callback_query(filters.regex("leaderboard") & ~app.bl_users)
+@lang.language()
+async def _leaderboard_cb(_, query: types.CallbackQuery):
+    data = query.data.split()
+    action = data[1]
+
+    if action == "close":
+        await query.answer()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+        return
+
+    if action == "back":
+        chat_id = int(data[2])
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["leaderboard_menu"],
+            reply_markup=buttons.leaderboard_markup(query.lang, chat_id),
+        )
+
+    if action == "users":
+        chat_id = int(data[2])
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["leaderboard_choose"],
+            reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+        )
+
+    if action == "groups":
+        await query.answer(query.lang["processing"])
+        top = await db.get_top_chats()
+        if not top:
+            return await query.edit_message_text(
+                text=query.lang["leaderboard_empty"],
+                reply_markup=buttons.leaderboard_result_markup(
+                    query.lang, query.message.chat.id, groups=True
+                ),
+            )
+
+        text = query.lang["leaderboard_groups_title"]
+        for i, entry in enumerate(top, start=1):
+            try:
+                name = (await app.get_chat(entry["_id"])).title
+            except Exception:
+                name = str(entry["_id"])
+            text += query.lang["leaderboard_group_item"].format(i, name, entry["count"])
+
+        return await query.edit_message_text(
+            text=text,
+            reply_markup=buttons.leaderboard_result_markup(
+                query.lang, query.message.chat.id, groups=True
+            ),
+        )
+
+    if action == "period":
+        chat_id, period = int(data[2]), data[3]
+        await query.answer(query.lang["processing"])
+        top = await db.get_top_users(chat_id, period)
+        if not top:
+            return await query.edit_message_text(
+                text=query.lang["leaderboard_empty"],
+                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+            )
+
+        ids = [entry["_id"] for entry in top]
+        users = {u.id: u.mention for u in await app.get_users(ids)}
+
+        text = query.lang[f"leaderboard_{period}_title"]
+        for i, entry in enumerate(top, start=1):
+            mention = users.get(entry["_id"], str(entry["_id"]))
+            text += query.lang["leaderboard_user_item"].format(i, mention, entry["count"])
+
+        return await query.edit_message_text(
+            text=text,
+            reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
+        )
+
+
 @app.on_callback_query(filters.regex("settings") & ~app.bl_users)
 @lang.language()
 @admin_check
@@ -176,4 +256,5 @@ async def _settings_cb(_, query: types.CallbackQuery):
             chat_id,
         )
     )
+
 

@@ -66,6 +66,49 @@ class Inline:
 
         return self.ikm(rows)
 
+    def leaderboard_markup(self, _lang: dict, chat_id: int) -> types.InlineKeyboardMarkup:
+        return self.ikm(
+            [
+                [
+                    self.ikb(text=_lang["leaderboard_users"], callback_data=f"leaderboard users {chat_id}", style=enums.ButtonStyle.PRIMARY),
+                    self.ikb(text=_lang["leaderboard_groups"], callback_data="leaderboard groups", style=enums.ButtonStyle.PRIMARY),
+                ]
+            ]
+        )
+
+    def leaderboard_period_markup(self, _lang: dict, chat_id: int) -> types.InlineKeyboardMarkup:
+        return self.ikm(
+            [
+                [
+                    self.ikb(text=_lang["leaderboard_daily"], callback_data=f"leaderboard period {chat_id} daily"),
+                    self.ikb(text=_lang["leaderboard_weekly"], callback_data=f"leaderboard period {chat_id} weekly"),
+                    self.ikb(text=_lang["leaderboard_overall"], callback_data=f"leaderboard period {chat_id} overall"),
+                ],
+                [
+                    self.ikb(text=_lang["back"], callback_data=f"leaderboard back {chat_id}", style=enums.ButtonStyle.PRIMARY),
+                    self.ikb(text=_lang["close"], callback_data="leaderboard close", style=enums.ButtonStyle.DANGER),
+                ],
+            ]
+        )
+
+    def leaderboard_result_markup(
+        self, _lang: dict, chat_id: int, groups: bool = False
+    ) -> types.InlineKeyboardMarkup:
+        rows = []
+        if groups:
+            rows.append([self.ikb(text=_lang["leaderboard_support"], url=config.SUPPORT_CHAT)])
+        rows.append(
+            [
+                self.ikb(
+                    text=_lang["back"],
+                    callback_data=f"leaderboard back {chat_id}" if groups else f"leaderboard users {chat_id}",
+                    style=enums.ButtonStyle.PRIMARY,
+                ),
+                self.ikb(text=_lang["close"], callback_data="leaderboard close", style=enums.ButtonStyle.DANGER),
+            ]
+        )
+        return self.ikm(rows)
+
     def lang_markup(self, _lang: str) -> types.InlineKeyboardMarkup:
         langs = lang.get_languages()
 
@@ -164,4 +207,5 @@ class Inline:
                 ],
             ]
         )
+
 

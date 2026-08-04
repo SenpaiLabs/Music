@@ -11,6 +11,7 @@ from pyrogram import errors
 from pyrogram.errors import (ChatSendMediaForbidden, ChatSendPhotosForbidden,
                              MessageIdInvalid)
 from pyrogram.raw import functions
+from pyrogram.raw import types as raw_types
 from pyrogram.types import InputMediaPhoto, Message
 from pytgcalls import PyTgCalls, exceptions, types
 from pytgcalls.pytgcalls_session import PyTgCallsSession
@@ -42,8 +43,8 @@ class TgCall(PyTgCalls):
 
         try:
             await client.leave_call(chat_id, close=False)
-        except Exception as e:
-            logger.warning(f"Failed to leave call in {chat_id}: {e}")
+        except Exception:
+            pass
 
 
     async def play_media(
@@ -155,7 +156,13 @@ class TgCall(PyTgCalls):
 
         try:
             peer = await client.resolve_peer(chat_id)
-            full = await client.invoke(functions.channels.GetFullChannel(channel=peer))
+            if isinstance(peer, raw_types.InputPeerChannel):
+                full = await client.invoke(functions.channels.GetFullChannel(channel=peer))
+            elif isinstance(peer, raw_types.InputPeerChat):
+                full = await client.invoke(functions.messages.GetFullChat(chat_id=peer.chat_id))
+            else:
+                return False
+
             input_call = full.full_chat.call
             if not input_call:
                 return True
@@ -170,8 +177,7 @@ class TgCall(PyTgCalls):
                 if getattr(p.peer, "user_id", None) not in (assistant_id, None)
             ]
             return len(real_users) == 0
-        except Exception as e:
-            logger.warning(f"VC empty check failed for {chat_id}: {e}")
+        except Exception:
             return False
 
 

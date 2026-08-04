@@ -3,6 +3,7 @@
 # This file is part of AnonXMusic
 
 
+from datetime import datetime, timezone
 from random import randint
 from time import time
 
@@ -41,6 +42,9 @@ class MongoDB:
 
         self.lang = {}
         self.langdb = self.db.lang
+
+        self.userstatsdb = self.db.user_stats
+        self.chatstatsdb = self.db.chat_stats
 
         self.users = []
         self.usersdb = self.db.users
@@ -298,6 +302,59 @@ class MongoDB:
             upsert=True,
         )
 
+    # LEADERBOARD METHODS
+    async def add_play(self, chat_id: int, user_id: int) -> None:
+        now = datetime.now(timezone.utc)
+        day = now.strftime("%Y-%m-%d")
+        week = now.strftime("%G-W%V")
+
+        await self.userstatsdb.update_one(
+            {"_id": f"{chat_id}:{user_id}:{day}"},
+            {
+                "$inc": {"count": 1},
+                "$set": {
+                    "chat_id": chat_id,
+                    "user_id": user_id,
+                    "day": day,
+                    "week": week,
+                },
+            },
+            upsert=True,
+        )
+        await self.chatstatsdb.update_one(
+            {"_id": f"{chat_id}:{day}"},
+            {
+                "$inc": {"count": 1},
+                "$set": {"chat_id": chat_id, "day": day, "week": week},
+            },
+            upsert=True,
+        )
+
+    async def get_top_users(self, chat_id: int, period: str) -> list[dict]:
+        match = {"chat_id": chat_id}
+        if period == "daily":
+            match["day"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        elif period == "weekly":
+            match["week"] = datetime.now(timezone.utc).strftime("%G-W%V")
+
+        pipeline = [
+            {"$match": match},
+            {"$group": {"_id": "$user_id", "count": {"$sum": "$count"}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 10},
+        ]
+        cursor = await self.userstatsdb.aggregate(pipeline)
+        return [doc async for doc in cursor]
+
+    async def get_top_chats(self) -> list[dict]:
+        pipeline = [
+            {"$group": {"_id": "$chat_id", "count": {"$sum": "$count"}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 10},
+        ]
+        cursor = await self.chatstatsdb.aggregate(pipeline)
+        return [doc async for doc in cursor]
+
     # SUDO METHODS
     async def add_sudo(self, user_id: int) -> None:
         await self.cache.update_one(
@@ -387,4 +444,5 @@ class MongoDB:
         await self.get_blacklisted(True)
         await self.get_logger()
         logger.info("Database cache loaded.")
+
 
