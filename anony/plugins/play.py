@@ -87,6 +87,7 @@ async def play_hndlr(
 
     if await db.is_logger():
         await utils.play_log(m, sent.link, file.title, file.duration)
+    await db.add_play(m.chat.id, m.from_user.id)
 
     file.user = mention
     if force:
@@ -131,3 +132,4 @@ async def play_hndlr(
         chat_id=m.chat.id,
         text=m.lang["playlist_queued"].format(len(tracks)) + added,
     )
+
