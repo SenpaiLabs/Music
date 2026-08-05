@@ -174,5 +174,6 @@
     "help_5": "Oynat",
     "help_6": "Sıra",
     "help_7": "İstatistikler",
-    "help_8": "Sudo Kullanıcıları"
+    "help_8": "Sudo Kullanıcıları",
+    "leaderboard_cooldown": "Please wait {0}s before clicking again."
 }

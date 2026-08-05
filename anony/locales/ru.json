@@ -174,5 +174,6 @@
     "help_5": "Воспроизведение",
     "help_6": "Очередь",
     "help_7": "Статистика",
-    "help_8": "Sudoers"
+    "help_8": "Sudoers",
+    "leaderboard_cooldown": "Please wait {0}s before clicking again."
 }
