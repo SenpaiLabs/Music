@@ -113,7 +113,10 @@ def checkUB(play):
                     )
 
                 await umm.delete()
-                await client.resolve_peer(chat_id)
+                try:
+                    await client.resolve_peer(chat_id)
+                except Exception:
+                    pass
 
         if await db.get_cmd_delete(chat_id):
             try:
@@ -124,3 +127,4 @@ def checkUB(play):
         return await play(_, m, force, m3u8, video, url)
 
     return wrapper
+

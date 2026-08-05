@@ -14,7 +14,6 @@
     "autoplay_on": "Autoplay has been enabled for this chat.",
     "autoplay_off": "Autoplay has been disabled for this chat.",
     "autoplay_usage": "<b>Usage:</b>\n\n<code>/autoplay [on|off]</code>",
-    "autoplay_btn": "Autoplay: {}",
     "bl_usage": "<b>Usage:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "Only chat IDs and user IDs are supported.",
     "bl_already": "This chat is already blacklisted.",
@@ -69,6 +68,7 @@
     "leaderboard_user_item": "<b>{0}.</b> {1} — <code>{2}</code> plays\n",
     "leaderboard_group_item": "<b>{0}.</b> {1} — <code>{2}</code> plays\n",
     "leaderboard_empty": "No data available for the leaderboard yet.",
+    "leaderboard_cooldown": "Please wait {0}s before clicking again.",
     "leaderboard_support": "Support Group",
     "log_fetch": "Fetching logs...",
     "log_not_found": "Log file doesn't exist.",
@@ -150,8 +150,6 @@
     "cancel": "Cancel",
     "channel": "Channel",
     "close": "Close",
-    "off": "Off",
-    "on": "On",
     "disabled": "Disabled",
     "enabled": "Enabled",
     "forward": "forward",
@@ -174,5 +172,8 @@
     "help_5": "Play",
     "help_6": "Queue",
     "help_7": "Stats",
-    "help_8": "Sudoers"
+    "help_8": "Sudoers",
+    "autoplay_btn": "Autoplay: {}",
+    "on": "On",
+    "off": "Off"
 }

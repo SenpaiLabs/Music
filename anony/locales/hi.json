@@ -14,7 +14,6 @@
     "autoplay_on": "इस चैट के लिए ऑटोप्ले सक्षम कर दिया गया है।",
     "autoplay_off": "इस चैट के लिए ऑटोप्ले अक्षम कर दिया गया है।",
     "autoplay_usage": "<b>उपयोग:</b>\n\n<code>/autoplay [on|off]</code>",
-    "autoplay_btn": "ऑटोप्ले: {}",
     "bl_usage": "<b>उपयोग:</b>\n\n/{0} [chat_id|user_id]",
     "bl_invalid": "केवल चैट आईडी और उपयोगकर्ता आईडी समर्थित हैं।",
     "bl_already": "यह चैट पहले से ही काली सूची में है।",
@@ -69,6 +68,7 @@
     "leaderboard_user_item": "<b>{0}.</b> {1} — <code>{2}</code> प्ले\n",
     "leaderboard_group_item": "<b>{0}.</b> {1} — <code>{2}</code> प्ले\n",
     "leaderboard_empty": "लीडरबोर्ड के लिए अभी तक कोई डेटा उपलब्ध नहीं है।",
+    "leaderboard_cooldown": "दोबारा क्लिक करने से पहले {0} सेकंड रुकें।",
     "leaderboard_support": "सपोर्ट ग्रुप",
     "log_fetch": "लॉग प्राप्त हो रहे हैं...",
     "log_not_found": "लॉग फ़ाइल मौजूद नहीं है।",
@@ -150,8 +150,6 @@
     "cancel": "रद्द करें",
     "channel": "चैनल",
     "close": "बंद करें",
-    "off": "ऑफ",
-    "on": "ऑन",
     "disabled": "अक्षम",
     "enabled": "सक्षम",
     "forward": "आगे",
@@ -174,5 +172,8 @@
     "help_5": "चलाएं",
     "help_6": "कतार",
     "help_7": "आँकड़े",
-    "help_8": "सूडोर्स"
+    "help_8": "सूडोर्स",
+    "autoplay_btn": "ऑटोप्ले: {}",
+    "on": "चालू",
+    "off": "बंद"
 }

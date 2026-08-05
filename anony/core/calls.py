@@ -47,12 +47,15 @@ class TgCall(PyTgCalls):
             pass
 
 
+    MAX_SKIP_ATTEMPTS = 5
+
     async def play_media(
         self,
         chat_id: int,
         message: Message,
         media: Media | Track,
         seek_time: int = 0,
+        attempt: int = 0,
     ) -> None:
         client = await db.get_assistant(chat_id)
         _lang = await lang.get_lang(chat_id)
@@ -64,7 +67,10 @@ class TgCall(PyTgCalls):
 
         if not media.file_path:
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            return await self.play_next(chat_id)
+            if attempt >= self.MAX_SKIP_ATTEMPTS:
+                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+                return await self.stop(chat_id)
+            return await self.play_next(chat_id, attempt=attempt + 1)
 
         stream = types.MediaStream(
             media_path=media.file_path,
@@ -131,17 +137,26 @@ class TgCall(PyTgCalls):
                     media.message_id = sent.id
         except FileNotFoundError:
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            await self.play_next(chat_id)
+            if attempt >= self.MAX_SKIP_ATTEMPTS:
+                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+                return await self.stop(chat_id)
+            await self.play_next(chat_id, attempt=attempt + 1)
         except ProcessLookupError as ex:
             logger.warning(f"Stream probe failed for {media.file_path}: {ex}")
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            await self.play_next(chat_id)
+            if attempt >= self.MAX_SKIP_ATTEMPTS:
+                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+                return await self.stop(chat_id)
+            await self.play_next(chat_id, attempt=attempt + 1)
         except exceptions.NoActiveGroupCall:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_no_call"])
         except exceptions.NoAudioSourceFound:
             await message.edit_text(_lang["error_no_audio"])
-            await self.play_next(chat_id)
+            if attempt >= self.MAX_SKIP_ATTEMPTS:
+                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+                return await self.stop(chat_id)
+            await self.play_next(chat_id, attempt=attempt + 1)
         except (ConnectionError, ConnectionNotFound, TelegramServerError):
             await self.stop(chat_id)
             await message.edit_text(_lang["error_tg_server"])
@@ -192,7 +207,7 @@ class TgCall(PyTgCalls):
         await self.play_media(chat_id, msg, media)
 
 
-    async def play_next(self, chat_id: int) -> None:
+    async def play_next(self, chat_id: int, attempt: int = 0) -> None:
         if loop := await db.get_loop(chat_id):
             await db.set_loop(chat_id, loop - 1)
             return await self.replay(chat_id)
@@ -239,13 +254,16 @@ class TgCall(PyTgCalls):
         if not media.file_path:
             media.file_path = await yt.download(media.id, video=media.video)
             if not media.file_path:
-                await self.play_next(chat_id)
-                return await msg.edit_text(
+                await msg.edit_text(
                     _lang["error_no_file"].format(config.SUPPORT_CHAT)
                 )
+                if attempt >= self.MAX_SKIP_ATTEMPTS:
+                    logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+                    return await self.stop(chat_id)
+                return await self.play_next(chat_id, attempt=attempt + 1)
 
         media.message_id = msg.id
-        await self.play_media(chat_id, msg, media)
+        await self.play_media(chat_id, msg, media, attempt=attempt)
 
 
     async def ping(self) -> float:
@@ -276,4 +294,5 @@ class TgCall(PyTgCalls):
             self.clients.append(client)
             await self.decorators(client)
         logger.info("PyTgCalls client(s) started.")
+
 

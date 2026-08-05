@@ -303,30 +303,34 @@ class MongoDB:
         )
 
     # LEADERBOARD METHODS
-    async def add_play(self, chat_id: int, user_id: int) -> None:
+    async def add_play(
+        self, chat_id: int, user_id: int, name: str = None, chat_title: str = None
+    ) -> None:
         now = datetime.now(timezone.utc)
         day = now.strftime("%Y-%m-%d")
         week = now.strftime("%G-W%V")
 
+        user_set = {
+            "chat_id": chat_id,
+            "user_id": user_id,
+            "day": day,
+            "week": week,
+        }
+        if name:
+            user_set["name"] = name
+
+        chat_set = {"chat_id": chat_id, "day": day, "week": week}
+        if chat_title:
+            chat_set["title"] = chat_title
+
         await self.userstatsdb.update_one(
             {"_id": f"{chat_id}:{user_id}:{day}"},
-            {
-                "$inc": {"count": 1},
-                "$set": {
-                    "chat_id": chat_id,
-                    "user_id": user_id,
-                    "day": day,
-                    "week": week,
-                },
-            },
+            {"$inc": {"count": 1}, "$set": user_set},
             upsert=True,
         )
         await self.chatstatsdb.update_one(
             {"_id": f"{chat_id}:{day}"},
-            {
-                "$inc": {"count": 1},
-                "$set": {"chat_id": chat_id, "day": day, "week": week},
-            },
+            {"$inc": {"count": 1}, "$set": chat_set},
             upsert=True,
         )
 
@@ -339,7 +343,14 @@ class MongoDB:
 
         pipeline = [
             {"$match": match},
-            {"$group": {"_id": "$user_id", "count": {"$sum": "$count"}}},
+            {"$sort": {"day": 1}},
+            {
+                "$group": {
+                    "_id": "$user_id",
+                    "count": {"$sum": "$count"},
+                    "name": {"$last": "$name"},
+                }
+            },
             {"$sort": {"count": -1}},
             {"$limit": 10},
         ]
@@ -348,7 +359,14 @@ class MongoDB:
 
     async def get_top_chats(self) -> list[dict]:
         pipeline = [
-            {"$group": {"_id": "$chat_id", "count": {"$sum": "$count"}}},
+            {"$sort": {"day": 1}},
+            {
+                "$group": {
+                    "_id": "$chat_id",
+                    "count": {"$sum": "$count"},
+                    "title": {"$last": "$title"},
+                }
+            },
             {"$sort": {"count": -1}},
             {"$limit": 10},
         ]
@@ -444,5 +462,4 @@ class MongoDB:
         await self.get_blacklisted(True)
         await self.get_logger()
         logger.info("Database cache loaded.")
-
 

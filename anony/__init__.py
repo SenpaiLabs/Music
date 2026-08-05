@@ -62,18 +62,33 @@ from anony.core.calls import TgCall
 anon = TgCall()
 
 
+async def _graceful(coro, name: str, timeout: float = 5) -> None:
+    task = asyncio.ensure_future(coro)
+    try:
+        await asyncio.wait([task], timeout=timeout)
+    except Exception:
+        return
+
+    if not task.done():
+        return
+
+    exc = task.exception() if not task.cancelled() else None
+    if exc:
+        logger.warning(f"Error in {name}: {exc}")
+
+
 async def stop() -> None:
     logger.info("Stopping...")
     for task in tasks:
-        task.cancel()
         try:
-            await task
-        except asyncio.exceptions.CancelledError:
-            pass
+            await asyncio.wait([task], timeout=3)
+        except Exception:
+            continue
 
-    await app.exit()
-    await userbot.exit()
-    await db.close()
-    await thumb.close()
+    await _graceful(app.exit(), "app.exit")
+    await _graceful(userbot.exit(), "userbot.exit")
+    await _graceful(db.close(), "db.close")
+    await _graceful(thumb.close(), "thumb.close")
 
     logger.info("Stopped.\n")
+
