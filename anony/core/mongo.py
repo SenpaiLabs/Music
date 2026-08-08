@@ -50,6 +50,8 @@ class MongoDB:
         self.users = []
         self.usersdb = self.db.users
 
+        self.afkdb = self.db.afk
+
     async def connect(self) -> None:
         """Check if we can connect to the database.
 
@@ -459,6 +461,21 @@ class MongoDB:
         if not self.users:
             self.users.extend([user["_id"] async for user in self.usersdb.find()])
         return self.users
+
+    # AFK METHODS
+    async def add_afk(self, user_id: int, mode: dict) -> None:
+        await self.afkdb.update_one(
+            {"_id": user_id},
+            {"$set": mode},
+            upsert=True,
+        )
+
+    async def remove_afk(self, user_id: int) -> None:
+        await self.afkdb.delete_one({"_id": user_id})
+
+    async def is_afk(self, user_id: int) -> dict | None:
+        return await self.afkdb.find_one({"_id": user_id})
+
 
 
     async def migrate_coll(self) -> None:

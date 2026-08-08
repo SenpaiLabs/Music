@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> şimdi AFK!{1}",
+    "afk_removed": "👋 <b>{0}</b> tekrar çevrimiçi!\n\n<b>Şu süredir uzakta:</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> {1} süredir AFK!{2}",
     "add_me": "Beni grubuna ekle",
     "admin_required": "Botun çalışması için <b>kullanıcıları bağlantı ile davet et</b> iznine ihtiyacı var.",
     "admin_cache_wait": "Yönetici önbelleğini yalnızca 10 dakikada bir yenileyebilirsiniz.",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>Yetki komutları:</b></u>\n<i>Yetkili kullanıcılar, yönetici olmadan devam eden yayını kontrol edebilir.</i>\n\n/auth: Bir kullanıcıyı yetkili kullanıcılar listesine ekler.\n/unauth: Bir kullanıcıyı yetkili kullanıcılar listesinden çıkarır.",
     "help_blist": "<u><b>Kara liste komutları:</b></u>\n<i>Kara listeye alınan sohbetler ve kullanıcılar botu kullanamaz.</i>\n\n/blacklist [sohbet_kimliği|kullanıcı_kimliği]: Bir sohbeti/kullanıcıyı kara listeye ekler.\n/unblacklist [sohbet_kimliği|kullanıcı_kimliği]: Bir sohbeti/kullanıcıyı kara listeden çıkarır.",
     "help_lang": "<u><b>Dil komutları:</b></u>\n<i>Bu bot birden fazla dili destekler.</i>\n\n/lang: Botun dilini değiştirir.",
-    "help_ping": "<u><b>Ping komutları:</b></u>\n\n/help: Botun yardım menüsünü gösterir.\n\n/ping: Botun gecikmesini ve bellek kullanımını kontrol eder.\n\n/start: Botu başlatır.\n\n/sudolist: Botun sudo kullanıcılarının listesini gösterir.",
+    "help_ping": "<u><b>Ping komutları:</b></u>\n\n/help: Botun yardım menüsünü gösterir.\n\n/ping: Botun gecikmesini ve bellek kullanımını kontrol eder.\n\n/start: Botu başlatır.\n\n/sudolist: Botun sudo kullanıcılarının listesini gösterir.\n\n/afk [sebep]: Kendinizi AFK olarak işaretleyin.\n",
     "help_play": "<u><b>Oynatma komutları:</b></u>\n<i>Aşağıdaki komutları kullanarak görüntülü sohbette müzik çalabilirsiniz.</i>\n\n/play [şarkı adı/youtube bağlantısı/ses dosyasına yanıt]: Görüntülü sohbette müzik çalar.\n/vplay [şarkı adı/youtube bağlantısı/videoya yanıt]: Görüntülü sohbette müzik videosu oynatır.\n-f: Görüntülü sohbette zorla müzik çalar.\n-v: Görüntülü sohbette müzik videosu oynatır.\n\n/autoplay [on/off]: Görüntülü sohbette otomatik oynatmayı etkinleştirir veya devre dışı bırakır.\n\n<b>Örnek:</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>Sıra komutları:</b></u>\n\n/queue: Sırada bekleyen parçaları gösterir.",
     "help_stats": "<u><b>İstatistik komutları:</b></u>\n\n/stats: Botun istatistiklerini gösterir.\n\n/leaderboard: En iyi kullanıcıların ve grupların lider tablosunu gösterir.",
@@ -175,5 +178,5 @@
     "help_6": "Sıra",
     "help_7": "İstatistikler",
     "help_8": "Sudo Kullanıcıları",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "Lütfen tekrar tıklamadan önce {0} saniye bekleyin."
 }

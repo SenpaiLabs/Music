@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> est maintenant AFK!{1}",
+    "afk_removed": "👋 <b>{0}</b> est de retour en ligne!\n\n<b>Absent depuis :</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> est AFK depuis {1}!{2}",
     "add_me": "Ajoutez-moi à votre groupe",
     "admin_required": "Le bot nécessite l'autorisation <b>d'inviter des utilisateurs via un lien</b> pour fonctionner.",
     "admin_cache_wait": "Vous ne pouvez actualiser le cache administrateur qu'une fois toutes les 10 minutes.",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>Commandes d'authentification :</b></u>\n<i>Les utilisateurs autorisés peuvent contrôler le flux en cours sans être administrateur.</i>\n\n/auth : Ajouter un utilisateur à la liste des utilisateurs autorisés.\n/unauth : Supprimer un utilisateur de la liste des utilisateurs autorisés.",
     "help_blist": "<u><b>Commandes de la liste noire :</b></u>\n<i>Les chats et les utilisateurs sur la liste noire ne peuvent pas utiliser le bot.</i>\n\n/blacklist [chat_id|user_id] : Ajouter un chat/utilisateur à la liste noire.\n/unblacklist [chat_id|user_id] : Supprimer un chat/utilisateur de la liste noire",
     "help_lang": "<u><b>Commandes de langue :</b></u>\n<i>Ce bot prend en charge plusieurs langues.</i>\n\n/lang : Changer la langue du bot.",
-    "help_ping": "<u><b>Commandes Ping :</b></u>\n\n/help : Affiche le menu d'aide du bot.\n\n/ping : Vérifie le ping et l'utilisation de la mémoire du bot.\n\n/start : Démarre le bot.\n\n/sudolist : Affiche la liste des utilisateurs sudo du bot.",
+    "help_ping": "<u><b>Commandes Ping :</b></u>\n\n/help : Affiche le menu d'aide du bot.\n\n/ping : Vérifie le ping et l'utilisation de la mémoire du bot.\n\n/start : Démarre le bot.\n\n/sudolist : Affiche la liste des utilisateurs sudo du bot.\n\n/afk [raison]: Marquez-vous comme AFK.\n",
     "help_play": "<u><b>Commandes de lecture :</b></u>\n<i>Vous pouvez écouter de la musique dans le chat vidéo à l'aide des commandes suivantes.</i>\n\n/play [nom de la chanson/URL YouTube/répondre à l'audio] : Écouter de la musique dans le chat vidéo.\n/vplay [nom de la chanson/URL YouTube/répondre à la vidéo] : Lire un clip vidéo dans le chat vidéo.\n-f : Forcer la lecture de la musique dans le chat vidéo.\n-v : Lit un clip vidéo dans le chat vidéo.\n\n/autoplay [on/off] : Active ou désactive la lecture automatique dans le chat vidéo.\n\n<b>Exemple :</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>Commandes de la file d'attente :</b></u>\n\n/queue : Affiche les pistes actuellement en file d'attente.",
     "help_stats": "<u><b>Commandes de statistiques :</b></u>\n\n/stats : Affiche les statistiques du bot.\n\n/leaderboard : Affiche le classement des meilleurs utilisateurs et groupes.",
@@ -175,5 +178,5 @@
     "help_6": "File d'attente",
     "help_7": "Statistiques",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "Veuillez patienter {0}s avant de cliquer à nouveau."
 }
