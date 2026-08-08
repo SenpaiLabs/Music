@@ -37,6 +37,12 @@ class TgCall(PyTgCalls):
 
     async def stop(self, chat_id: int) -> None:
         client = await db.get_assistant(chat_id)
+        current = queue.get_current(chat_id)
+        if config.DB_CHANNEL and current and getattr(current, "file_path", None):
+            import os
+            if os.path.isfile(current.file_path):
+                try: os.remove(current.file_path)
+                except Exception: pass
         queue.clear(chat_id)
         await db.remove_call(chat_id)
         await db.set_loop(chat_id, 0)
@@ -213,6 +219,11 @@ class TgCall(PyTgCalls):
             return await self.replay(chat_id)
 
         last_track = queue.get_current(chat_id)
+        if config.DB_CHANNEL and last_track and getattr(last_track, "file_path", None):
+            import os
+            if os.path.isfile(last_track.file_path):
+                try: os.remove(last_track.file_path)
+                except Exception: pass
         media = queue.get_next(chat_id)
         try:
             if media and media.message_id:
@@ -252,7 +263,13 @@ class TgCall(PyTgCalls):
         _lang = await lang.get_lang(chat_id)
         msg = await app.send_message(chat_id=chat_id, text=_lang["play_next"])
         if not media.file_path:
-            media.file_path = await yt.download(media.id, video=media.video)
+            media.file_path = await yt.download(
+                media.id,
+                video=media.video,
+                title=getattr(media, "title", ""),
+                duration=getattr(media, "duration", ""),
+                duration_sec=getattr(media, "duration_sec", 0)
+            )
             if not media.file_path:
                 await msg.edit_text(
                     _lang["error_no_file"].format(config.SUPPORT_CHAT)

@@ -24,6 +24,7 @@ class YouTube:
         self.checked = False
         self.cookie_dir = "anony/cookies"
         self.warned = False
+        self._locks = {}
         self.regex = re.compile(
             r"(https?://)?(www\.|m\.|music\.)?"
             r"(youtube\.com/(watch\?v=|shorts/|playlist\?list=)|youtu\.be/)"
@@ -185,48 +186,109 @@ class YouTube:
         m, s = divmod(rem, 60)
         return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
 
-    async def download(self, video_id: str, video: bool = False) -> str | None:
+    async def download(
+        self, video_id: str, video: bool = False, title: str = "", duration: str = "", duration_sec: int = 0
+    ) -> str | None:
         url = self.base + video_id
         ext = "mp4" if video else "webm"
         filename = f"downloads/{video_id}.{ext}"
 
-        if Path(filename).exists():
-            return filename
+        if video_id not in self._locks:
+            self._locks[video_id] = asyncio.Lock()
 
-        cookie = self.get_cookies()
-        base_opts = {
-            "outtmpl": "downloads/%(id)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "no_warnings": True,
-            "overwrites": False,
-            "nocheckcertificate": True,
-            "cookiefile": cookie,
-        }
+        async with self._locks[video_id]:
+            if Path(filename).exists():
+                return filename
 
-        if video:
-            ydl_opts = {
-                **base_opts,
-                "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)",
-                "merge_output_format": "mp4",
-            }
-        else:
-            ydl_opts = {
-                **base_opts,
-                "format": "bestaudio[ext=webm][acodec=opus]",
-            }
+            from anony import app, config, db
 
-        def _download():
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            if config.DB_CHANNEL:
                 try:
-                    ydl.download([url])
-                except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
-                    return None
-                except Exception as ex:
-                    logger.warning("Download failed: %s", ex)
-                    return None
-            return filename
+                    cache_data = await db.get_song_cache(video_id, video)
+                    if cache_data:
+                        try:
+                            if cache_data.get("file_id"):
+                                downloaded_path = await app.download_media(cache_data["file_id"], file_name=filename)
+                                if downloaded_path:
+                                    await db.increment_play_count(video_id, video)
+                                    return downloaded_path
+                        except Exception:
+                            pass
+                        
+                        if cache_data.get("msg_id"):
+                            try:
+                                msg = await app.get_messages(config.DB_CHANNEL, cache_data["msg_id"])
+                                if msg and (msg.audio or msg.video or msg.document):
+                                    downloaded_path = await app.download_media(msg, file_name=filename)
+                                    if downloaded_path:
+                                        await db.increment_play_count(video_id, video)
+                                        return downloaded_path
+                            except Exception as e:
+                                logger.warning(f"Cache fallback download failed for {video_id}: {e}")
+                except Exception as e:
+                    logger.warning(f"Cache check failed for {video_id}: {e}")
 
-        return await asyncio.to_thread(_download)
+            cookie = self.get_cookies()
+            base_opts = {
+                "outtmpl": "downloads/%(id)s.%(ext)s",
+                "quiet": True,
+                "noplaylist": True,
+                "geo_bypass": True,
+                "no_warnings": True,
+                "overwrites": False,
+                "nocheckcertificate": True,
+                "cookiefile": cookie,
+            }
+
+            if video:
+                ydl_opts = {
+                    **base_opts,
+                    "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                    "merge_output_format": "mp4",
+                }
+            else:
+                ydl_opts = {
+                    **base_opts,
+                    "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
+                }
+
+            def _download():
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    try:
+                        ydl.download([url])
+                    except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
+                        return None
+                    except Exception as ex:
+                        logger.warning("Download failed: %s", ex)
+                        return None
+                return filename
+
+            result_filename = await asyncio.to_thread(_download)
+
+            if result_filename and config.DB_CHANNEL:
+                async def _upload_to_cache():
+                    try:
+                        sent = None
+                        if video:
+                            sent = await app.send_video(config.DB_CHANNEL, video=result_filename, duration=duration_sec)
+                        else:
+                            sent = await app.send_audio(config.DB_CHANNEL, audio=result_filename, title=title, duration=duration_sec)
+                        
+                        if sent:
+                            media = sent.video or sent.audio or sent.voice or sent.document
+                            if not media:
+                                logger.warning(f"Failed to find media attribute in sent message for {video_id}")
+                                return
+                            
+                            file_id = getattr(media, "file_id", None)
+                            if file_id:
+                                await db.save_song_cache(
+                                    video_id, video, sent.id, file_id, title, duration, duration_sec
+                                )
+                    except Exception as e:
+                        logger.warning(f"Background cache upload failed for {video_id}: {e}")
+                
+                asyncio.create_task(_upload_to_cache())
+
+            return result_filename
 
