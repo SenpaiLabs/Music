@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> agora está AFK!{1}",
+    "afk_removed": "👋 <b>{0}</b> está de volta online!\n\n<b>Ausente por:</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> está AFK por {1}!{2}",
     "add_me": "Adicione-me ao seu grupo",
     "admin_required": "O bot requer a permissão <b>convidar usuários por link</b> para funcionar.",
     "admin_cache_wait": "Você só pode atualizar o cache do administrador uma vez a cada 10 minutos.",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>Comandos de autenticação:</b></u>\n<i>Usuários autorizados podem controlar o stream em andamento sem serem administradores.</i>\n\n/auth: Adiciona um usuário à lista de usuários autorizados.\n/unauth: Remove um usuário da lista de usuários autorizados.",
     "help_blist": "<u><b>Comandos da lista negra:</b></u>\n<i>Bate-papos e usuários na lista negra não podem usar o bot.</i>\n\n/blacklist [chat_id|user_id]: Adiciona um bate-papo/usuário à lista negra.\n/unblacklist [chat_id|user_id]: Remove um bate-papo/usuário da lista negra",
     "help_lang": "<u><b>Comandos de idioma:</b></u>\n<i>Este bot suporta vários idiomas.</i>\n\n/lang: Altera o idioma do bot.",
-    "help_ping": "<u><b>Comandos de ping:</b></u>\n\n/help: Mostra o menu de ajuda do bot.\n\n/ping: Verifica o ping e o uso de memória do bot.\n\n/start: Inicia o bot.\n\n/sudolist: Mostra a lista de usuários sudo do bot.",
+    "help_ping": "<u><b>Comandos de ping:</b></u>\n\n/help: Mostra o menu de ajuda do bot.\n\n/ping: Verifica o ping e o uso de memória do bot.\n\n/start: Inicia o bot.\n\n/sudolist: Mostra a lista de usuários sudo do bot.\n\n/afk [motivo]: Marque-se como AFK.\n",
     "help_play": "<u><b>Comandos de reprodução:</b></u>\n<i>Você pode tocar música no chat de vídeo usando os seguintes comandos.</i>\n\n/play [nome da música/URL do youtube/responder ao áudio]: Toca música no chat de vídeo.\n/vplay [nome da música/URL do youtube/responder ao vídeo]: Toca videoclipe no chat de vídeo.\n-f: Força a reprodução de música no chat de vídeo.\n-v: Toca videoclipe no chat de vídeo.\n\n/autoplay [on/off]: Ativa ou desativa a reprodução automática no chat de vídeo.\n\n<b>Exemplo:</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>Comandos da fila:</b></u>\n\n/queue: Mostra as faixas atualmente na fila.",
     "help_stats": "<u><b>Comandos de estatísticas:</b></u>\n\n/stats: Mostra as estatísticas do bot.\n\n/leaderboard: Mostra a classificação dos melhores usuários e grupos.",
@@ -175,5 +178,5 @@
     "help_6": "Fila",
     "help_7": "Estatísticas",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "Por favor, aguarde {0}s antes de clicar novamente."
 }

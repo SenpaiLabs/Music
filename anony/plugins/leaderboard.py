@@ -10,7 +10,7 @@ from anony.helpers import buttons
 
 
 @app.on_message(
-    filters.command(["leaderboard", "top"]) & filters.group & ~app.bl_users
+    filters.command(["leaderboard", "top", "tops", "ranking"]) & filters.group & ~app.bl_users
 )
 @lang.language()
 async def _leaderboard(_, m: types.Message):

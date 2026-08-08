@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> ahora está AFK!{1}",
+    "afk_removed": "👋 <b>{0}</b> vuelve a estar en línea!\n\n<b>Ausente por:</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> ha estado AFK durante {1}!{2}",
     "add_me": "Agrégame a tu grupo",
     "admin_required": "El bot requiere el permiso de <b>invitar usuarios a través del enlace</b> para funcionar.",
     "admin_cache_wait": "Solo puedes actualizar la memoria caché de administrador una vez cada 10 minutos.",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>Comandos de autenticación:</b></u>\n<i>Los usuarios autorizados pueden controlar la transmisión en curso sin ser administradores.</i>\n\n/auth: Agrega un usuario a la lista de usuarios autorizados.\n/unauth: Elimina un usuario de la lista de usuarios autorizados.",
     "help_blist": "<u><b>Comandos de la lista negra:</b></u>\n<i>Los chats y usuarios de la lista negra no pueden usar el bot.</i>\n\n/blacklist [chat_id|user_id]: Agrega un chat/usuario a la lista negra.\n/unblacklist [chat_id|user_id]: Elimina un chat/usuario de la lista negra",
     "help_lang": "<u><b>Comandos de idioma:</b></u>\n<i>Este bot admite varios idiomas.</i>\n\n/lang: Cambia el idioma del bot.",
-    "help_ping": "<u><b>Comandos de ping:</b></u>\n\n/help: Muestra el menú de ayuda del bot.\n\n/ping: Comprueba el ping y el uso de memoria del bot.\n\n/start: Inicia el bot.\n\n/sudolist: Muestra la lista de usuarios sudo del bot.",
+    "help_ping": "<u><b>Comandos de ping:</b></u>\n\n/help: Muestra el menú de ayuda del bot.\n\n/ping: Comprueba el ping y el uso de memoria del bot.\n\n/start: Inicia el bot.\n\n/sudolist: Muestra la lista de usuarios sudo del bot.\n\n/afk [razón]: Márcate como AFK.\n",
     "help_play": "<u><b>Comandos de reproducción:</b></u>\n<i>Puedes reproducir música en el chat de video usando los siguientes comandos.</i>\n\n/play [nombre de la canción/URL de YouTube/respuesta al audio]: Reproduce música en el chat de video.\n/vplay [nombre de la canción/URL de YouTube/respuesta al video]: Reproduce un video musical en el chat de video.\n-f: Fuerza la reproducción de música en el chat de video.\n-v: Reproduce un video musical en el chat de video.\n\n/autoplay [on/off]: Activa o desactiva la reproducción automática en el chat de video.\n\n<b>Ejemplo:</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>Comandos de la cola:</b></u>\n\n/queue: Muestra las pistas actualmente en cola.",
     "help_stats": "<u><b>Comandos de estadísticas:</b></u>\n\n/stats: Muestra las estadísticas del bot.\n\n/leaderboard: Muestra la tabla de clasificación de los mejores usuarios y grupos.",
@@ -175,5 +178,5 @@
     "help_6": "Cola",
     "help_7": "Estadísticas",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "Por favor, espera {0}s antes de hacer clic nuevamente."
 }
