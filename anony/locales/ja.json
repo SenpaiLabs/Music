@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> はAFKになりました!{1}",
+    "afk_removed": "👋 <b>{0}</b> がオンラインに戻りました!\n\n<b>離席時間:</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> は {1} 間AFKです!{2}",
     "add_me": "グループに追加してください",
     "admin_required": "ボットが機能するには<b>リンク経由でユーザーを招待する</b>権限が必要です。",
     "admin_cache_wait": "管理者キャッシュは10分に1回しか更新できません。",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>認証コマンド:</b></u>\n<i>承認されたユーザーは、管理者でなくても進行中のストリームを制御できます。</i>\n\n/auth: 承認されたユーザーのリストにユーザーを追加します。\n/unauth: 承認されたユーザーのリストからユーザーを削除します。",
     "help_blist": "<u><b>ブラックリストコマンド:</b></u>\n<i>ブラックリストに登録されたチャットやユーザーはボットを使用できません。</i>\n\n/blacklist [chat_id|user_id]: チャット/ユーザーをブラックリストに追加します。\n/unblacklist [chat_id|user_id]: チャット/ユーザーをブラックリストから削除します",
     "help_lang": "<u><b>言語コマンド:</b></u>\n<i>このボットは複数の言語をサポートしています。</i>\n\n/lang: ボットの言語を変更します。",
-    "help_ping": "<u><b>Pingコマンド:</b></u>\n\n/help: ボットのヘルプメニューを表示します。\n\n/ping: ボットのpingとメモリ使用量を確認します。\n\n/start: ボットを開始します。\n\n/sudolist: ボットのsudoユーザーのリストを表示します。",
+    "help_ping": "<u><b>Pingコマンド:</b></u>\n\n/help: ボットのヘルプメニューを表示します。\n\n/ping: ボットのpingとメモリ使用量を確認します。\n\n/start: ボットを開始します。\n\n/sudolist: ボットのsudoユーザーのリストを表示します。\n\n/afk [理由]: 自分をAFKに設定します。\n",
     "help_play": "<u><b>再生コマンド:</b></u>\n<i>次のコマンドを使用して、ビデオチャットで音楽を再生できます。</i>\n\n/play [曲名/YouTube URL/オーディオへの返信]: ビデオチャットで音楽を再生します。\n/vplay [曲名/YouTube URL/ビデオへの返信]: ビデオチャットでミュージックビデオを再生します。\n-f: ビデオチャットで音楽を強制的に再生します。\n-v: ビデオチャットでミュージックビデオを再生します。\n\n/autoplay [on/off]: ビデオチャットでオートプレイを有効または無効にします。\n\n<b>例:</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>キューコマンド:</b></u>\n\n/queue: 現在キューに入っているトラックを表示します。",
     "help_stats": "<u><b>統計コマンド:</b></u>\n\n/stats: ボットの統計情報を表示します。\n\n/leaderboard: トップユーザーとトップグループのリーダーボードを表示します。",
@@ -175,5 +178,5 @@
     "help_6": "キュー",
     "help_7": "統計",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "再度クリックする前に {0} 秒お待ちください。"
 }

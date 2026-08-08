@@ -1,4 +1,7 @@
 {
+    "afk_set": "💤 <b>{0}</b> ist jetzt AFK!{1}",
+    "afk_removed": "👋 <b>{0}</b> ist wieder online!\n\n<b>Abwesend für:</b> {1}",
+    "afk_reply": "💤 <b>{0}</b> ist seit {1} AFK!{2}",
     "add_me": "Füge mich deiner Gruppe hinzu",
     "admin_required": "Der Bot benötigt die Berechtigung <b>Benutzer über einen Link einladen</b>, um zu funktionieren.",
     "admin_cache_wait": "Du kannst den Admin-Cache nur alle 10 Minuten aktualisieren.",
@@ -46,7 +49,7 @@
     "help_auth": "<u><b>Auth-Befehle:</b></u>\n<i>Autorisierte Benutzer können den laufenden Stream steuern, ohne ein Administrator zu sein.</i>\n\n/auth: Fügt einen Benutzer zur Liste der autorisierten Benutzer hinzu.\n/unauth: Entfernt einen Benutzer aus der Liste der autorisierten Benutzer.",
     "help_blist": "<u><b>Blacklist-Befehle:</b></u>\n<i>Chats und Benutzer auf der schwarzen Liste können den Bot nicht verwenden.</i>\n\n/blacklist [chat_id|user_id]: Fügt einen Chat/Benutzer zur schwarzen Liste hinzu.\n/unblacklist [chat_id|user_id]: Entfernt einen Chat/Benutzer von der schwarzen Liste",
     "help_lang": "<u><b>Sprachbefehle:</b></u>\n<i>Dieser Bot unterstützt mehrere Sprachen.</i>\n\n/lang: Ändert die Sprache des Bots.",
-    "help_ping": "<u><b>Ping-Befehle:</b></u>\n\n/help: Zeigt das Hilfemenü des Bots an.\n\n/ping: Überprüft den Ping und die Speichernutzung des Bots.\n\n/start: Startet den Bot.\n\n/sudolist: Zeigt die Liste der Sudo-Benutzer des Bots an.",
+    "help_ping": "<u><b>Ping-Befehle:</b></u>\n\n/help: Zeigt das Hilfemenü des Bots an.\n\n/ping: Überprüft den Ping und die Speichernutzung des Bots.\n\n/start: Startet den Bot.\n\n/sudolist: Zeigt die Liste der Sudo-Benutzer des Bots an.\n\n/afk [Grund]: Markiere dich als AFK.\n",
     "help_play": "<u><b>Wiedergabebefehle:</b></u>\n<i>Du kannst Musik im Video-Chat mit den folgenden Befehlen abspielen.</i>\n\n/play [Songname/YouTube-URL/Antwort auf Audio]: Spielt Musik im Video-Chat ab.\n/vplay [Songname/YouTube-URL/Antwort auf Video]: Spielt ein Musikvideo im Video-Chat ab.\n-f: Erzwingt das Abspielen von Musik im Video-Chat.\n-v: Spielt ein Musikvideo im Video-Chat ab.\n\n/autoplay [on/off]: Aktiviert oder deaktiviert die automatische Wiedergabe im Video-Chat.\n\n<b>Beispiel:</b> <code>/play -f -v attention</code>",
     "help_queue": "<u><b>Warteschlangenbefehle:</b></u>\n\n/queue: Zeigt die aktuell in der Warteschlange befindlichen Titel an.",
     "help_stats": "<u><b>Statistikbefehle:</b></u>\n\n/stats: Zeigt die Statistiken des Bots an.\n\n/leaderboard: Zeigt die Bestenliste der Top-Nutzer und -Gruppen an.",
@@ -175,5 +178,5 @@
     "help_6": "Warteschlange",
     "help_7": "Statistiken",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Please wait {0}s before clicking again."
+    "leaderboard_cooldown": "Bitte warte {0}s, bevor du erneut klickst."
 }
