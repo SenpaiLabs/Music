@@ -12,6 +12,7 @@ class Config:
         self.MONGO_URL = getenv("MONGO_URL", "mongodb+srv://piyush000yogi_db_user:rkhZr3vh1j06oCF9@piyush.t7w4qvr.mongodb.net/?retryWrites=true&w=majority")
 
         self.LOGGER_ID = int(getenv("LOGGER_ID", -1003150808065))
+        self.DB_CHANNEL = int(getenv("DB_CHANNEL", "-1003018573623"))
         self.OWNER_ID = int(getenv("OWNER_ID", 8900240311))
 
         self.DURATION_LIMIT = int(getenv("DURATION_LIMIT", 60)) * 60
