@@ -29,6 +29,7 @@ class MongoDB:
         self.loop = {}
         self.notified = []
         self.cache = self.db.cache
+        self.song_cache = self.db.song_cache
         self.logger = False
 
         self.assistant = {}
@@ -67,6 +68,58 @@ class MongoDB:
         """Close the connection to the database."""
         await self.mongo.close()
         logger.info("Database connection closed.")
+
+    # SONG CACHE METHODS
+    async def get_song_cache(self, video_id: str, video: bool) -> dict | None:
+        doc = await self.song_cache.find_one({"_id": video_id})
+        if doc:
+            key = "video" if video else "audio"
+            return doc.get(key)
+        return None
+
+    async def save_song_cache(
+        self, video_id: str, video: bool, msg_id: int, file_id: str, title: str, duration: str, duration_sec: int
+    ) -> None:
+        key = "video" if video else "audio"
+        await self.song_cache.update_one(
+            {"_id": video_id},
+            {
+                "$set": {
+                    f"{key}.msg_id": msg_id,
+                    f"{key}.file_id": file_id,
+                    f"{key}.title": title,
+                    f"{key}.duration": duration,
+                    f"{key}.duration_sec": duration_sec,
+                },
+                "$setOnInsert": {f"{key}.play_count": 0}
+            },
+            upsert=True,
+        )
+
+    async def increment_play_count(self, video_id: str, video: bool) -> None:
+        key = "video" if video else "audio"
+        await self.song_cache.update_one(
+            {"_id": video_id},
+            {"$inc": {f"{key}.play_count": 1}}
+        )
+
+    async def get_top_songs(self, limit: int = 10) -> list:
+        pipeline = [
+            {
+                "$addFields": {
+                    "total_plays": {
+                        "$add": [
+                            {"$ifNull": ["$audio.play_count", 0]},
+                            {"$ifNull": ["$video.play_count", 0]}
+                        ]
+                    }
+                }
+            },
+            {"$sort": {"total_plays": -1}},
+            {"$limit": limit}
+        ]
+        cursor = await self.song_cache.aggregate(pipeline)
+        return [doc async for doc in cursor]
 
     # CACHE
     async def get_call(self, chat_id: int) -> bool:
