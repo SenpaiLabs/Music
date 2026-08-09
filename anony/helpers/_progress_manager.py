@@ -110,6 +110,7 @@ class ProgressManager:
                 pass
 
     def register(self, chat_id: int):
+        self.start_workers()
         self.deregister(chat_id)
         # Start the generator loop for this chat
         self.active_chats[chat_id] = asyncio.create_task(self._chat_loop(chat_id))
@@ -171,4 +172,3 @@ class ProgressManager:
             pass
 
 progress_manager = ProgressManager()
-progress_manager.start_workers()
