@@ -53,7 +53,7 @@ class ProgressManager:
     async def _worker_loop(self):
         while self.is_running:
             try:
-                chat_id, remaining_time = await self.queue.get()
+                chat_id, remaining_time, timer, needs_autoplay = await self.queue.get()
                 
                 # Backpressure: If this isn't the latest queued update for this chat, drop it.
                 if self.pending_edits.get(chat_id) != remaining_time:
@@ -77,13 +77,13 @@ class ProgressManager:
                 # Token bucket consume (Rate Limiting)
                 await self.rate_limiter.consume(1)
                 
-                timer = f"-{time.strftime('%M:%S', time.gmtime(remaining_time))}"
-                
-                _lang = await lang.get_lang(chat_id)
-                status = await db.get_autoplay(chat_id)
-                autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
-                    _lang.get("on", "On") if status else _lang.get("off", "Off")
-                )
+                autoplay = None
+                if needs_autoplay:
+                    _lang = await lang.get_lang(chat_id)
+                    status = await db.get_autoplay(chat_id)
+                    autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
+                        _lang.get("on", "On") if status else _lang.get("off", "Off")
+                    )
 
                 try:
                     await app.edit_message_reply_markup(
@@ -137,11 +137,30 @@ class ProgressManager:
                 duration = media.duration_sec
                 remaining = max(duration - played, 0)
                 
+                if remaining <= 30:
+                    next_track = queue.get_next(chat_id, check=True)
+                    if next_track and not next_track.file_path:
+                        from anony import yt
+                        # Spawn background task to prevent blocking the generator loop
+                        asyncio.create_task(yt.download(next_track.id, video=next_track.video))
+                        # Prevent duplicate downloads by immediately assigning a dummy path or letting download handle duplicates
+                        next_track.file_path = "downloading"
+                        
                 if remaining < 10:
                     continue # handled by remove=True in main update loop or stop
                 
+                from anony import config
+                if config.THUMB_GEN:
+                    pos = min(int((played / duration) * 10), 9)
+                    bar = "—" * pos + "◉" + "—" * (9 - pos)
+                    timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
+                    needs_autoplay = False
+                else:
+                    timer = f"-{time.strftime('%M:%S', time.gmtime(remaining))}"
+                    needs_autoplay = True
+                
                 self.pending_edits[chat_id] = remaining
-                await self.queue.put((chat_id, remaining))
+                await self.queue.put((chat_id, remaining, timer, needs_autoplay))
                 
         except asyncio.CancelledError:
             pass

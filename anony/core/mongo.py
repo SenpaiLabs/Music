@@ -8,6 +8,7 @@ from random import randint
 from time import time
 
 from pymongo import AsyncMongoClient
+from cachetools import TTLCache
 
 from anony import config, logger, userbot
 
@@ -20,7 +21,7 @@ class MongoDB:
         self.mongo = AsyncMongoClient(config.MONGO_URL, serverSelectionTimeoutMS=12500)
         self.db = self.mongo.Anon
 
-        self.admin_list = {}
+        self.admin_list = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
         self.active_calls = {}
         self.admin_play = []
         self.autoplay = []
@@ -35,7 +36,7 @@ class MongoDB:
         self.assistant = {}
         self.assistantdb = self.db.assistant
 
-        self.auth = {}
+        self.auth = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
         self.authdb = self.db.auth
 
         self.chats = []

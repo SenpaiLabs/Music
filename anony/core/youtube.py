@@ -123,73 +123,97 @@ class YouTube:
         return tracks
 
     async def autoplay(self, video_id: str, history: set, video: bool = False) -> Track | None:
-        cookie = self.get_cookies()
-        flat_opts = {
-            "extract_flat": True,
-            "quiet": True,
-            "no_warnings": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "cookiefile": cookie,
-            "playlistend": 10,
-            "logger": YTDLLogger(),
-        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"https://www.youtube.com/watch?v={video_id}") as resp:
+                    if resp.status != 200:
+                        return None
+                    text = await resp.text()
+                    
+            match = re.search(r'var ytInitialData = (\{.*?\});</script>', text)
+            if not match:
+                return None
+                
+            import json
+            data = json.loads(match.group(1))
+            
+            def find_videos(obj):
+                videos = []
+                if isinstance(obj, dict):
+                    if "compactVideoRenderer" in obj:
+                        videos.append(("compact", obj["compactVideoRenderer"]))
+                    if "lockupViewModel" in obj:
+                        videos.append(("lockup", obj["lockupViewModel"]))
+                    for k, v in obj.items():
+                        videos.extend(find_videos(v))
+                elif isinstance(obj, list):
+                    for item in obj:
+                        videos.extend(find_videos(item))
+                return videos
+                
+            renderers = find_videos(data)
+            next_id = None
+            title = "Unknown"
+            duration = "0:00"
+            duration_sec = 0
+            uploader = "Autoplay"
+            thumbnail = ""
+            view_count = ""
+            
+            for r_type, rnd in renderers:
+                if r_type == "compact":
+                    vid = rnd.get("videoId")
+                    if vid and vid != video_id and vid not in history:
+                        next_id = vid
+                        t_obj = rnd.get("title", {})
+                        title = t_obj.get("simpleText") or (t_obj.get("runs", [{}])[0].get("text", "Unknown"))
+                        
+                        l_obj = rnd.get("lengthText", {})
+                        duration = l_obj.get("simpleText") or (l_obj.get("runs", [{}])[0].get("text", "0:00"))
+                        
+                        u_obj = rnd.get("shortBylineText", {})
+                        uploader = u_obj.get("simpleText") or (u_obj.get("runs", [{}])[0].get("text", uploader))
+                        
+                        thumbs = rnd.get("thumbnail", {}).get("thumbnails", [])
+                        if thumbs:
+                            thumbnail = thumbs[-1].get("url", "")
+                            
+                        v_obj = rnd.get("viewCountText", {})
+                        view_count = v_obj.get("simpleText") or (v_obj.get("runs", [{}])[0].get("text", ""))
+                        break
+                        
+                elif r_type == "lockup":
+                    vid = rnd.get("contentId")
+                    if vid and vid != video_id and vid not in history:
+                        next_id = vid
+                        m_obj = rnd.get("metadata", {}).get("lockupMetadataViewModel", {})
+                        title = m_obj.get("title", {}).get("content", "Unknown")
+                        break
 
-        def _related():
-            url = f"{self.base}{video_id}&list=RD{video_id}"
-            with yt_dlp.YoutubeDL(flat_opts) as ydl:
-                try:
-                    return ydl.extract_info(url, download=False)
-                except Exception:
-                    return None
+            if not next_id:
+                return None
+                
+            parts = duration.split(":")
+            if len(parts) == 3:
+                duration_sec = int(parts[0])*3600 + int(parts[1])*60 + int(parts[2])
+            elif len(parts) == 2:
+                duration_sec = int(parts[0])*60 + int(parts[1])
 
-        info = await asyncio.to_thread(_related)
-        entries = (info or {}).get("entries") or []
-
-        next_id = next(
-            (
-                e.get("id") for e in entries
-                if e.get("id") and e.get("id") != video_id and e.get("id") not in history
-            ),
-            None,
-        )
-        if not next_id:
+            return Track(
+                id=next_id,
+                channel_name=uploader,
+                duration=duration,
+                duration_sec=duration_sec,
+                message_id=0,
+                title=title[:25],
+                thumbnail=thumbnail.split("?")[0] if thumbnail else "",
+                url=self.base + next_id,
+                view_count=view_count,
+                video=video,
+            )
+        except Exception as e:
+            logger.warning(f"Autoplay fetch failed: {e}")
             return None
-
-        info_opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "cookiefile": cookie,
-            "skip_download": True,
-            "logger": YTDLLogger(),
-        }
-
-        def _details():
-            with yt_dlp.YoutubeDL(info_opts) as ydl:
-                try:
-                    return ydl.extract_info(self.base + next_id, download=False)
-                except Exception:
-                    return None
-
-        data = await asyncio.to_thread(_details)
-        if not data:
-            return None
-
-        duration_sec = int(data.get("duration") or 0)
-        return Track(
-            id=next_id,
-            channel_name=data.get("uploader"),
-            duration=self.format_duration(duration_sec),
-            duration_sec=duration_sec,
-            message_id=0,
-            title=(data.get("title") or "Unknown")[:25],
-            thumbnail=data.get("thumbnail") or "",
-            url=self.base + next_id,
-            view_count=str(data.get("view_count") or ""),
-            video=video,
-        )
 
     @staticmethod
     def format_duration(seconds: int) -> str:
