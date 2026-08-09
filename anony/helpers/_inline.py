@@ -30,14 +30,15 @@ class Inline:
             keyboard.append(
                 [self.ikb(text=status, callback_data=f"controls status {chat_id}", style=enums.ButtonStyle.DANGER)]
             )
-        elif timer:
-            keyboard.append(
-                [self.ikb(text=timer, callback_data=f"controls status {chat_id}")]
-            )
-        elif autoplay:
-            keyboard.append(
-                [self.ikb(text=autoplay, callback_data=f"controls autoplay {chat_id}")]
-            )
+        else:
+            if timer:
+                keyboard.append(
+                    [self.ikb(text=timer, callback_data=f"controls status {chat_id}")]
+                )
+            if autoplay:
+                keyboard.append(
+                    [self.ikb(text=autoplay, callback_data=f"controls autoplay {chat_id}")]
+                )
 
         if not remove:
             keyboard.append(
