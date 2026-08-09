@@ -76,28 +76,23 @@ async def update_timer(length=10, sleep=12):
                     if next and not next.file_path:
                         next.file_path = await yt.download(next.id, video=next.video)
 
+                if not config.THUMB_GEN:
+                    continue
+
                 if remaining < 10:
                     remove = True
                 else:
-                    if config.THUMB_GEN:
-                        timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {timer} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
-                    else:
-                        timer = None
-                        _lang = await lang.get_lang(chat_id)
-                        status = await db.get_autoplay(chat_id)
-                        autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
-                            _lang.get("on", "On") if status else _lang.get("off", "Off")
-                        )
+                    timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {timer} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
                     remove = False
 
-                if not timer and not autoplay and not remove:
+                if not timer and not remove:
                     continue
 
                 await app.edit_message_reply_markup(
                     chat_id=chat_id,
                     message_id=message_id,
                     reply_markup=buttons.controls(
-                        chat_id=chat_id, timer=timer, autoplay=autoplay, remove=remove
+                        chat_id=chat_id, timer=timer, remove=remove
                     ),
                 )
             except asyncio.CancelledError:

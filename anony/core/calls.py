@@ -18,7 +18,7 @@ from pytgcalls.pytgcalls_session import PyTgCallsSession
 
 from anony import (app, config, db, lang, logger,
                    queue, thumb, userbot, yt)
-from anony.helpers import Media, Track, buttons, utils
+from anony.helpers import Media, Track, buttons, utils, progress_manager
 
 
 class TgCall(PyTgCalls):
@@ -36,6 +36,7 @@ class TgCall(PyTgCalls):
         return await client.resume(chat_id)
 
     async def stop(self, chat_id: int) -> None:
+        progress_manager.deregister(chat_id)
         client = await db.get_assistant(chat_id)
         current = queue.get_current(chat_id)
         if config.DB_CHANNEL and current and getattr(current, "file_path", None):
@@ -115,32 +116,43 @@ class TgCall(PyTgCalls):
                     media.user,
                 )
                 keyboard = buttons.controls(chat_id)
-                try:
-                    if _thumb:
-                        await message.edit_media(
-                            media=InputMediaPhoto(
-                                media=_thumb,
-                                caption=text,
-                            ),
-                            reply_markup=keyboard,
-                        )
-                    else:
-                        await message.edit_text(text, reply_markup=keyboard)
-                except (ChatSendMediaForbidden, ChatSendPhotosForbidden, MessageIdInvalid):
-                    if _thumb:
-                        sent = await app.send_photo(
-                            chat_id=chat_id,
-                            photo=_thumb,
-                            caption=text,
-                            reply_markup=keyboard,
-                        )
-                    else:
-                        sent = await app.send_message(
-                            chat_id=chat_id,
-                            text=text,
-                            reply_markup=keyboard,
-                        )
-                    media.message_id = sent.id
+                
+                for _ in range(2):
+                    try:
+                        try:
+                            if _thumb:
+                                await message.edit_media(
+                                    media=InputMediaPhoto(
+                                        media=_thumb,
+                                        caption=text,
+                                    ),
+                                    reply_markup=keyboard,
+                                )
+                            else:
+                                await message.edit_text(text, reply_markup=keyboard)
+                        except (ChatSendMediaForbidden, ChatSendPhotosForbidden, MessageIdInvalid):
+                            if _thumb:
+                                sent = await app.send_photo(
+                                    chat_id=chat_id,
+                                    photo=_thumb,
+                                    caption=text,
+                                    reply_markup=keyboard,
+                                )
+                            else:
+                                sent = await app.send_message(
+                                    chat_id=chat_id,
+                                    text=text,
+                                    reply_markup=keyboard,
+                                )
+                            media.message_id = sent.id
+                        break
+                    except errors.FloodWait as fw:
+                        logger.warning(f"FloodWait on Now Playing message: sleeping {fw.value}s (chat {chat_id})")
+                        await asyncio.sleep(fw.value)
+                        
+                if not config.THUMB_GEN:
+                    progress_manager.register(chat_id)
+
         except FileNotFoundError:
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
             if attempt >= self.MAX_SKIP_ATTEMPTS:
