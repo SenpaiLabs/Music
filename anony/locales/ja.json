@@ -178,5 +178,19 @@
     "help_6": "キュー",
     "help_7": "統計",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "再度クリックする前に {0} 秒お待ちください。"
+    "leaderboard_cooldown": "再度クリックする前に {0} 秒お待ちください。",
+    "purge_start": "{0} プロセスを開始しています...",
+    "purge_progress": "進行状況: {0} / {1} ({2:.1f}%)\n残り時間: {3}\n成功: {4}",
+    "purge_complete": "{0} 完了しました！\n\n処理済み合計: {1}\n成功: {2}\n失敗: {3}",
+    "purge_rights": "ここでメンバーを制限する十分な権限がありません。",
+    "purge_admin_req": "この操作を実行するにはボットに管理者権限が必要です。",
+    "purge_active": "このチャットではすでに操作が進行中です。",
+    "purge_op_ban": "全員をBAN",
+    "purge_op_kick": "全員をキック",
+    "purge_op_unban": "全員のBAN解除",
+    "purge_log_report": "一括モデレーション監査\n\nチャット: {0} (<code>{1}</code>)\n管理者: {2} (<code>{3}</code>)\nアクション: {4}\nフィルター: {5}\n\n処理済み: {6}\n所要時間: {7}",
+    "purge_test_result": "ドライラン完了！\n\n対象アクション: {0}\nフィルター: {1}\n見つかったユーザー: {2}\n推定時間: {3}",
+    "purge_calc": "計算中...",
+    "purge_all_users": "すべてのユーザー",
+    "purge_error": "エラー: {0}"
 }

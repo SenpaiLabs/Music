@@ -178,5 +178,19 @@
     "help_6": "Sıra",
     "help_7": "İstatistikler",
     "help_8": "Sudo Kullanıcıları",
-    "leaderboard_cooldown": "Lütfen tekrar tıklamadan önce {0} saniye bekleyin."
+    "leaderboard_cooldown": "Lütfen tekrar tıklamadan önce {0} saniye bekleyin.",
+    "purge_start": "{0} işlemi başlatılıyor...",
+    "purge_progress": "İlerleme: {0} / {1} ({2:.1f}%)\nKalan Zaman: {3}\nBaşarılı: {4}",
+    "purge_complete": "{0} tamamlandı!\n\nToplam işlenen: {1}\nBaşarılı: {2}\nBaşarısız: {3}",
+    "purge_rights": "Burada üyeleri kısıtlamak için yeterli yetkim yok.",
+    "purge_admin_req": "Botun bu işlemi gerçekleştirebilmesi için yönetici yetkilerine ihtiyacı var.",
+    "purge_active": "Bu sohbette zaten aktif bir işlem var.",
+    "purge_op_ban": "Herkesi Yasakla",
+    "purge_op_kick": "Herkesi At",
+    "purge_op_unban": "Herkesin Yasağını Kaldır",
+    "purge_log_report": "Toplu Moderasyon Denetimi\n\nSohbet: {0} (<code>{1}</code>)\nYönetici: {2} (<code>{3}</code>)\nİşlem: {4}\nFiltre: {5}\n\nİşlenen: {6}\nGeçen Süre: {7}",
+    "purge_test_result": "Deneme Çalıştırması Tamamlandı!\n\nHedef İşlem: {0}\nFiltre: {1}\nBulunan kullanıcı: {2}\nTahmini Süre: {3}",
+    "purge_calc": "Hesaplanıyor...",
+    "purge_all_users": "Tüm Kullanıcılar",
+    "purge_error": "Hata: {0}"
 }
