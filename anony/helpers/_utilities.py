@@ -106,6 +106,28 @@ class Utilities:
         )
         await app.send_message(chat_id=app.logger, text=_text)
 
+    async def autoplay_log(
+        self,
+        chat_id: int,
+        chat_title: str,
+        link: str,
+        title: str,
+        duration: str,
+        _lang: dict,
+    ) -> None:
+        if chat_id == app.logger:
+            return
+        _text = _lang["play_log"].format(
+            app.name,
+            chat_id,
+            chat_title,
+            "Autoplay",
+            "Autoplay",
+            link,
+            title,
+            duration,
+        )
+        await app.send_message(chat_id=app.logger, text=_text)
     async def send_log(self, m: types.Message, chat: bool = False) -> None:
         if chat:
             user = m.from_user
