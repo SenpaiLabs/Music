@@ -6,7 +6,6 @@ import asyncio
 import random
 import time
 from pyrogram.errors import MessageNotModified, MessageIdInvalid, FloodWait
-from anony import app, db, lang, queue
 from anony.helpers import buttons
 
 class TokenBucket:
@@ -63,6 +62,8 @@ class ProgressManager:
                 # Clear pending status since we are processing it
                 if chat_id in self.pending_edits:
                     del self.pending_edits[chat_id]
+
+                from anony import app, db, lang, queue
 
                 # Check if chat is still active and playing
                 if not await db.playing(chat_id):
@@ -125,6 +126,8 @@ class ProgressManager:
             while True:
                 # Jittered interval 4-7 seconds
                 await asyncio.sleep(random.uniform(4.0, 7.0))
+                
+                from anony import db, queue
                 
                 if not await db.playing(chat_id):
                     continue
