@@ -18,7 +18,7 @@ from pytgcalls.pytgcalls_session import PyTgCallsSession
 
 from anony import (app, config, db, lang, logger,
                    queue, thumb, userbot, yt)
-from anony.helpers import Media, Track, buttons
+from anony.helpers import Media, Track, buttons, utils
 
 
 class TgCall(PyTgCalls):
@@ -281,6 +281,19 @@ class TgCall(PyTgCalls):
 
         media.message_id = msg.id
         await self.play_media(chat_id, msg, media, attempt=attempt)
+
+        if media.user == "Autoplay" and await db.is_logger():
+            try:
+                await utils.autoplay_log(
+                    chat_id,
+                    msg.chat.title,
+                    msg.link,
+                    media.title,
+                    media.duration,
+                    _lang
+                )
+            except Exception:
+                pass
 
 
     async def ping(self) -> float:
