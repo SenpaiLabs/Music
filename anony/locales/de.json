@@ -178,5 +178,19 @@
     "help_6": "Warteschlange",
     "help_7": "Statistiken",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Bitte warte {0}s, bevor du erneut klickst."
+    "leaderboard_cooldown": "Bitte warte {0}s, bevor du erneut klickst.",
+    "purge_start": "Starte {0} Prozess...",
+    "purge_progress": "Fortschritt: {0} / {1} ({2:.1f}%)\nVerbleibend: {3}\nErfolgreich: {4}",
+    "purge_complete": "{0} abgeschlossen!\n\nInsgesamt verarbeitet: {1}\nErfolgreich: {2}\nFehlgeschlagen: {3}",
+    "purge_rights": "Ich habe nicht genügend Rechte, um Mitglieder hier einzuschränken.",
+    "purge_admin_req": "Der Bot benötigt Administratorrechte für diese Aktion.",
+    "purge_active": "In diesem Chat ist bereits ein Vorgang aktiv.",
+    "purge_op_ban": "Alle bannen",
+    "purge_op_kick": "Alle kicken",
+    "purge_op_unban": "Alle entbannen",
+    "purge_log_report": "Massen-Moderations-Audit\n\nChat: {0} (<code>{1}</code>)\nAdmin: {2} (<code>{3}</code>)\nAktion: {4}\nFilter: {5}\n\nVerarbeitet: {6}\nDauer: {7}",
+    "purge_test_result": "Testlauf abgeschlossen!\n\nZiel-Aktion: {0}\nFilter: {1}\nGefundene Benutzer: {2}\nGeschätzte Zeit: {3}",
+    "purge_calc": "Berechne...",
+    "purge_all_users": "Alle Benutzer",
+    "purge_error": "Fehler: {0}"
 }

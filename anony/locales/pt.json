@@ -178,5 +178,19 @@
     "help_6": "Fila",
     "help_7": "Estatísticas",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "Por favor, aguarde {0}s antes de clicar novamente."
+    "leaderboard_cooldown": "Por favor, aguarde {0}s antes de clicar novamente.",
+    "purge_start": "Iniciando o processo de {0}...",
+    "purge_progress": "Progresso: {0} / {1} ({2:.1f}%)\nTempo Restante: {3}\nSucesso: {4}",
+    "purge_complete": "{0} concluído!\n\nTotal processado: {1}\nSucesso: {2}\nFalha: {3}",
+    "purge_rights": "Não tenho permissões suficientes para restringir membros aqui.",
+    "purge_admin_req": "O bot precisa de privilégios de administrador para realizar esta ação.",
+    "purge_active": "Já existe uma operação ativa neste chat.",
+    "purge_op_ban": "Banir Todos",
+    "purge_op_kick": "Expulsar Todos",
+    "purge_op_unban": "Desbanir Todos",
+    "purge_log_report": "Auditoria de Moderação em Massa\n\nChat: {0} (<code>{1}</code>)\nAdmin: {2} (<code>{3}</code>)\nAção: {4}\nFiltro: {5}\n\nProcessado: {6}\nTempo Decorrido: {7}",
+    "purge_test_result": "Simulação Concluída!\n\nAção Alvo: {0}\nFiltro: {1}\nUsuários encontrados: {2}\nTempo Estimado: {3}",
+    "purge_calc": "Calculando...",
+    "purge_all_users": "Todos os Usuários",
+    "purge_error": "Erro: {0}"
 }

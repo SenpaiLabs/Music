@@ -178,5 +178,19 @@
     "help_8": "Sudoers",
     "autoplay_btn": "Autoplay: {}",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "purge_start": "Starting {0} process...",
+    "purge_progress": "Progress: {0} / {1} ({2:.1f}%)\nETA: {3}\nSuccessful: {4}",
+    "purge_complete": "{0} completed!\n\nTotal processed: {1}\nSuccessful: {2}\nFailed: {3}",
+    "purge_rights": "I don't have sufficient rights to restrict members here.",
+    "purge_admin_req": "Bot needs admin rights to perform this action.",
+    "purge_active": "An operation is already active in this chat.",
+    "purge_op_ban": "Ban All",
+    "purge_op_kick": "Kick All",
+    "purge_op_unban": "Unban All",
+    "purge_log_report": "Mass Moderation Audit\n\nChat: {0} (<code>{1}</code>)\nAdmin: {2} (<code>{3}</code>)\nAction: {4}\nFilter: {5}\n\nProcessed: {6}\nTime Taken: {7}",
+    "purge_test_result": "Dry-Run Complete!\n\nTarget Action: {0}\nFilter: {1}\nUsers found: {2}\nEstimated Time: {3}",
+    "purge_calc": "Calculating...",
+    "purge_all_users": "All Users",
+    "purge_error": "Error: {0}"
 }

@@ -178,5 +178,19 @@
     "help_6": "队列",
     "help_7": "统计",
     "help_8": "Sudoers",
-    "leaderboard_cooldown": "请等待 {0} 秒后再点击。"
+    "leaderboard_cooldown": "请等待 {0} 秒后再点击。",
+    "purge_start": "正在开始 {0} 进程...",
+    "purge_progress": "进度: {0} / {1} ({2:.1f}%)\n预计剩余时间: {3}\n成功: {4}",
+    "purge_complete": "{0} 已完成！\n\n处理总数: {1}\n成功: {2}\n失败: {3}",
+    "purge_rights": "我在这里没有足够的权限限制成员。",
+    "purge_admin_req": "机器人需要管理员权限才能执行此操作。",
+    "purge_active": "此群组中已有正在进行的操作。",
+    "purge_op_ban": "封禁所有人",
+    "purge_op_kick": "踢出所有人",
+    "purge_op_unban": "解封所有人",
+    "purge_log_report": "批量审核报告\n\n群组: {0} (<code>{1}</code>)\n管理员: {2} (<code>{3}</code>)\n操作: {4}\n过滤器: {5}\n\n已处理: {6}\n耗时: {7}",
+    "purge_test_result": "模拟运行完成！\n\n目标操作: {0}\n过滤器: {1}\n找到用户: {2}\n预计时间: {3}",
+    "purge_calc": "计算中...",
+    "purge_all_users": "所有用户",
+    "purge_error": "错误: {0}"
 }
