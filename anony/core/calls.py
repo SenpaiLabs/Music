@@ -88,7 +88,7 @@ class TgCall(PyTgCalls):
                 if media.video
                 else types.MediaStream.Flags.IGNORE
             ),
-            ffmpeg_parameters=f"-ss {seek_time}" if seek_time > 1 else None,
+            ffmpeg_parameters=f"-loglevel error -hide_banner -ss {seek_time}" if seek_time > 1 else "-loglevel error -hide_banner",
         )
         try:
             try:

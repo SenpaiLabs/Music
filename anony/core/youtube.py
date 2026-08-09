@@ -17,6 +17,17 @@ from anony import logger
 from anony.helpers import Track, utils
 
 
+class YTDLLogger:
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        pass
+
+
 class YouTube:
     def __init__(self):
         self.base = "https://www.youtube.com/watch?v="
@@ -121,6 +132,7 @@ class YouTube:
             "nocheckcertificate": True,
             "cookiefile": cookie,
             "playlistend": 10,
+            "logger": YTDLLogger(),
         }
 
         def _related():
@@ -151,6 +163,7 @@ class YouTube:
             "nocheckcertificate": True,
             "cookiefile": cookie,
             "skip_download": True,
+            "logger": YTDLLogger(),
         }
 
         def _details():
@@ -238,6 +251,7 @@ class YouTube:
                 "overwrites": False,
                 "nocheckcertificate": True,
                 "cookiefile": cookie,
+                "logger": YTDLLogger(),
             }
 
             if video:
