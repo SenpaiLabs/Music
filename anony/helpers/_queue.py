@@ -78,6 +78,6 @@ class Queue:
 
     def clear(self, chat_id: int) -> None:
         """Clear the entire queue and its play history."""
-        self.queues[chat_id].clear()
-        self.history[chat_id].clear()
+        self.queues.pop(chat_id, None)
+        self.history.pop(chat_id, None)
 
