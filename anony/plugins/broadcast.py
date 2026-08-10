@@ -38,25 +38,57 @@ async def _broadcast(_, message: types.Message):
     failed = None
 
     async with broadcasting:
+        stats = {"count": 0, "ucount": 0}
+        failed_list = []
+        
+        queue = asyncio.Queue()
         for chat in chats:
-            try:
-                (
-                    await msg.copy(chat, reply_markup=msg.reply_markup)
-                    if copy
-                    else await msg.forward(chat)
-                )
-                if chat in groups:
-                    count += 1
-                else:
-                    ucount += 1
-                await asyncio.sleep(0.2)
-            except errors.FloodWait as fw:
-                await asyncio.sleep(fw.value + 10)
-            except Exception as ex:
-                if not failed:
-                    failed = open("errors.txt", "w")
-                failed.write(f"{chat} - \n{format_exception(ex)}\n")
-                continue
+            queue.put_nowait(chat)
+            
+        circuit_breaker = asyncio.Event()
+        circuit_breaker.set()
+        
+        async def _worker():
+            while True:
+                try:
+                    chat = queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+                    
+                await circuit_breaker.wait()
+                try:
+                    (
+                        await msg.copy(chat, reply_markup=msg.reply_markup)
+                        if copy
+                        else await msg.forward(chat)
+                    )
+                    if chat in groups:
+                        stats["count"] += 1
+                    else:
+                        stats["ucount"] += 1
+                    await asyncio.sleep(0.5)
+                except errors.FloodWait as fw:
+                    circuit_breaker.clear()
+                    await asyncio.sleep(fw.value + 1)
+                    circuit_breaker.set()
+                    queue.put_nowait(chat)
+                except Exception as ex:
+                    failed_list.append(f"{chat} - \n{format_exception(ex)}\n")
+                
+                queue.task_done()
+                
+        workers = [asyncio.create_task(_worker()) for _ in range(20)]
+        await queue.join()
+        
+        for w in workers:
+            w.cancel()
+            
+        count = stats["count"]
+        ucount = stats["ucount"]
+        
+        if failed_list:
+            failed = open("errors.txt", "w")
+            failed.writelines(failed_list)
 
     text = message.lang["gcast_end"].format(count, ucount)
     if failed:
