@@ -39,6 +39,19 @@ class TgCall(PyTgCalls):
         progress_manager.deregister(chat_id)
         client = await db.get_assistant(chat_id)
         current = queue.get_current(chat_id)
+        
+        if current and current.message_id:
+            try:
+                await app.edit_message_reply_markup(
+                    chat_id=chat_id,
+                    message_id=current.message_id,
+                    reply_markup=None
+                )
+            except (errors.MessageNotModified, MessageIdInvalid):
+                pass
+            except Exception as e:
+                logger.warning(f"Failed to clear buttons in {chat_id}: {e}")
+
         if config.DB_CHANNEL and current and getattr(current, "file_path", None):
             import os
             if os.path.isfile(current.file_path):
@@ -227,6 +240,19 @@ class TgCall(PyTgCalls):
             return
 
         media = queue.get_current(chat_id)
+        
+        if media and media.message_id:
+            try:
+                await app.edit_message_reply_markup(
+                    chat_id=chat_id,
+                    message_id=media.message_id,
+                    reply_markup=None
+                )
+            except (errors.MessageNotModified, MessageIdInvalid):
+                pass
+            except Exception as e:
+                logger.warning(f"Failed to clear buttons in {chat_id}: {e}")
+
         _lang = await lang.get_lang(chat_id)
         msg = await app.send_message(chat_id=chat_id, text=_lang["play_again"])
         media.message_id = msg.id
@@ -239,6 +265,19 @@ class TgCall(PyTgCalls):
             return await self.replay(chat_id)
 
         last_track = queue.get_current(chat_id)
+        
+        if last_track and last_track.message_id:
+            try:
+                await app.edit_message_reply_markup(
+                    chat_id=chat_id,
+                    message_id=last_track.message_id,
+                    reply_markup=None
+                )
+            except (errors.MessageNotModified, MessageIdInvalid):
+                pass
+            except Exception as e:
+                logger.warning(f"Failed to clear buttons in {chat_id}: {e}")
+
         if config.DB_CHANNEL and last_track and getattr(last_track, "file_path", None):
             import os
             if os.path.isfile(last_track.file_path):
