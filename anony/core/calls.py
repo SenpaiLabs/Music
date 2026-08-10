@@ -45,7 +45,9 @@ class TgCall(PyTgCalls):
                 await app.edit_message_reply_markup(
                     chat_id=chat_id,
                     message_id=current.message_id,
-                    reply_markup=None
+                    reply_markup=buttons.controls(
+                        chat_id, status="——————●——————", remove=True
+                    )
                 )
             except (errors.MessageNotModified, MessageIdInvalid):
                 pass
@@ -246,7 +248,9 @@ class TgCall(PyTgCalls):
                 await app.edit_message_reply_markup(
                     chat_id=chat_id,
                     message_id=media.message_id,
-                    reply_markup=None
+                    reply_markup=buttons.controls(
+                        chat_id, status="——————●——————", remove=True
+                    )
                 )
             except (errors.MessageNotModified, MessageIdInvalid):
                 pass
@@ -271,7 +275,9 @@ class TgCall(PyTgCalls):
                 await app.edit_message_reply_markup(
                     chat_id=chat_id,
                     message_id=last_track.message_id,
-                    reply_markup=None
+                    reply_markup=buttons.controls(
+                        chat_id, status="——————●——————", remove=True
+                    )
                 )
             except (errors.MessageNotModified, MessageIdInvalid):
                 pass
