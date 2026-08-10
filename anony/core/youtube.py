@@ -5,6 +5,7 @@
 
 import os
 import re
+import sys
 import yt_dlp
 import random
 import asyncio
@@ -80,25 +81,49 @@ class YouTube:
 
     async def search(self, query: str, m_id: int, video: bool = False) -> Track | None:
         try:
-            _search = VideosSearch(query, limit=1, with_live=False)
-            results = await _search.next()
-        except Exception:
-            return None
-        if results and results["result"]:
-            data = results["result"][0]
+            def _extract():
+                cookie = self.get_cookies()
+                opts = {
+                    "format": "bestaudio",
+                    "quiet": True,
+                    "noplaylist": True,
+                    "geo_bypass": True,
+                    "nocheckcertificate": True,
+                    "logger": YTDLLogger(),
+                }
+                if cookie:
+                    opts["cookiefile"] = cookie
+                
+                search_query = query if self.valid(query) or "youtube.com" in query else f"ytsearch1:{query}"
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(search_query, download=False)
+
+            info = await asyncio.to_thread(_extract)
+            if not info:
+                return None
+            
+            if "entries" in info:
+                if not info["entries"]:
+                    return None
+                data = info["entries"][0]
+            else:
+                data = info
+
             return Track(
                 id=data.get("id"),
-                channel_name=data.get("channel", {}).get("name"),
-                duration=data.get("duration"),
-                duration_sec=utils.to_seconds(data.get("duration")),
+                channel_name=data.get("uploader"),
+                duration=self.format_duration(int(data.get("duration", 0))),
+                duration_sec=int(data.get("duration", 0)),
                 message_id=m_id,
-                title=data.get("title")[:25],
-                thumbnail=data.get("thumbnails", [{}])[-1].get("url").split("?")[0],
-                url=data.get("link"),
-                view_count=data.get("viewCount", {}).get("short"),
+                title=data.get("title", "")[:25],
+                thumbnail=data.get("thumbnail", "").split("?")[0] if data.get("thumbnail") else "",
+                url=self.base + data.get("id", ""),
+                view_count=str(data.get("view_count", "")),
                 video=video,
             )
-        return None
+        except Exception as e:
+            logger.warning(f"Search failed for {query}: {e}")
+            return None
 
     async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
         tracks = []
@@ -285,43 +310,81 @@ class YouTube:
                 except Exception as e:
                     logger.warning(f"Cache check failed for {video_id}: {e}")
 
-            cookie = self.get_cookies()
-            base_opts = {
-                "outtmpl": "downloads/%(id)s.%(ext)s",
-                "quiet": True,
-                "noplaylist": True,
-                "geo_bypass": True,
-                "no_warnings": True,
-                "overwrites": False,
-                "nocheckcertificate": True,
-                "cookiefile": cookie,
-                "logger": YTDLLogger(),
-            }
+            cmd = [
+                sys.executable, "-m", "yt_dlp",
+                "--quiet",
+                "--no-playlist",
+                "--geo-bypass",
+                "--no-check-certificate",
+                "--print", "after_move:filepath",
+                "-o", filename
+            ]
 
             if video:
-                ydl_opts = {
-                    **base_opts,
-                    "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
-                    "merge_output_format": "mp4",
-                }
+                cmd.extend([
+                    "--format", "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                    "--merge-output-format", "mp4"
+                ])
             else:
-                ydl_opts = {
-                    **base_opts,
-                    "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
-                }
+                cmd.extend([
+                    "--format", "bestaudio[ext=webm][acodec=opus]/bestaudio/best"
+                ])
 
-            def _download():
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    try:
-                        ydl.download([url])
-                    except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
-                        return None
-                    except Exception as ex:
-                        logger.warning("Download failed: %s", ex)
-                        return None
-                return filename
+            cookie = self.get_cookies()
+            if cookie:
+                cmd.extend(["--cookies", cookie])
 
-            result_filename = await asyncio.to_thread(_download)
+            cmd.append(url)
+
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            result_filename = None
+
+            async def read_stdout():
+                nonlocal result_filename
+                while True:
+                    line = await process.stdout.readline()
+                    if not line:
+                        break
+                    decoded_line = line.decode('utf-8').strip()
+                    if decoded_line and Path(decoded_line).exists():
+                        result_filename = decoded_line
+
+            async def read_stderr():
+                while True:
+                    line = await process.stderr.readline()
+                    if not line:
+                        break
+                    decoded_line = line.decode('utf-8').strip()
+                    if decoded_line.startswith("WARNING:"):
+                        logger.warning(decoded_line)
+                    elif decoded_line.startswith("ERROR:"):
+                        logger.error(decoded_line)
+                    else:
+                        logger.warning(f"yt-dlp stderr: {decoded_line}")
+
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(read_stdout(), read_stderr(), process.wait()),
+                    timeout=300
+                )
+            except asyncio.TimeoutError:
+                logger.error(f"yt-dlp download timed out for {video_id}, killing process.")
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+                return None
+
+            if process.returncode != 0 or not result_filename:
+                logger.warning(f"Download failed for {video_id} with returncode {process.returncode}")
+                if Path(filename).exists():
+                    Path(filename).unlink()
+                return None
 
             if result_filename and config.DB_CHANNEL:
                 async def _upload_to_cache():

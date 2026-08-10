@@ -71,8 +71,20 @@ async def _broadcast(_, message: types.Message):
                     await asyncio.sleep(fw.value + 1)
                     circuit_breaker.set()
                     queue.put_nowait(chat)
+                except (
+                    errors.UserIsBlocked,
+                    errors.PeerIdInvalid,
+                    errors.InputUserDeactivated,
+                    errors.ChannelInvalid,
+                    errors.ChannelPrivate,
+                ) as ex:
+                    if chat in groups:
+                        await db.rm_chat(chat)
+                    else:
+                        await db.rm_user(chat)
+                    failed_list.append(f"{chat} - Cleaned from DB: {ex.__class__.__name__}\n")
                 except Exception as ex:
-                    failed_list.append(f"{chat} - \n{format_exception(ex)}\n")
+                    failed_list.append(f"{chat} - {ex.__class__.__name__}: {str(ex)}\n")
                 
                 queue.task_done()
                 
