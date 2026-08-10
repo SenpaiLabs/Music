@@ -200,16 +200,24 @@ class TgCall(PyTgCalls):
             if not input_call:
                 return True
 
-            result = await client.invoke(
-                functions.phone.GetGroupParticipants(
-                    call=input_call, ids=[], sources=[], offset="", limit=100
+            offset = ""
+            while True:
+                result = await client.invoke(
+                    functions.phone.GetGroupParticipants(
+                        call=input_call, ids=[], sources=[], offset=offset, limit=100
+                    )
                 )
-            )
-            real_users = [
-                p for p in result.participants
-                if getattr(p.peer, "user_id", None) not in (assistant_id, None)
-            ]
-            return len(real_users) == 0
+                
+                for p in result.participants:
+                    user_id = getattr(p.peer, "user_id", None)
+                    if user_id and user_id != assistant_id:
+                        return False
+                        
+                if not getattr(result, "next_offset", None):
+                    break
+                offset = result.next_offset
+                
+            return True
         except Exception:
             return False
 

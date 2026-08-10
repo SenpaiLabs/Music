@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from random import randint
 from time import time
 
-from pymongo import AsyncMongoClient
+from pymongo import AsyncMongoClient, UpdateOne
 from cachetools import TTLCache
 
 from anony import config, logger, userbot
@@ -52,6 +52,71 @@ class MongoDB:
         self.usersdb = self.db.users
 
         self.afkdb = self.db.afk
+        
+        self._stats_buffer = {"users": {}, "chats": {}}
+        self._flusher_task = None
+        self._admin_flusher_task = None
+
+    async def _admin_cache_flusher(self) -> None:
+        import asyncio
+        while True:
+            try:
+                await asyncio.sleep(900)  # 15 minutes
+                for chat_id in list(self.admin_list.keys()):
+                    try:
+                        await self.get_admins(chat_id, reload=True)
+                    except Exception:
+                        pass
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"Error in admin cache flusher: {e}") if getattr(self, "logger", None) else print(e)
+
+    async def _stats_flusher(self) -> None:
+        import asyncio
+        while True:
+            try:
+                await asyncio.sleep(60)
+                await self.flush_stats()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"Error in DB stats flusher: {e}") if getattr(self, "logger", None) else print(e)
+
+    async def flush_stats(self) -> None:
+        buffer = self._stats_buffer
+        self._stats_buffer = {"users": {}, "chats": {}}
+
+        if not buffer["users"] and not buffer["chats"]:
+            return
+
+        user_updates = [
+            UpdateOne(
+                {"_id": _id},
+                {"$inc": {"count": data["count"]}, "$set": data["set"]},
+                upsert=True
+            ) for _id, data in buffer["users"].items()
+        ]
+        
+        chat_updates = [
+            UpdateOne(
+                {"_id": _id},
+                {"$inc": {"count": data["count"]}, "$set": data["set"]},
+                upsert=True
+            ) for _id, data in buffer["chats"].items()
+        ]
+
+        if user_updates:
+            try:
+                await self.userstatsdb.bulk_write(user_updates)
+            except Exception as e:
+                pass
+                
+        if chat_updates:
+            try:
+                await self.chatstatsdb.bulk_write(chat_updates)
+            except Exception as e:
+                pass
 
     async def connect(self) -> None:
         """Check if we can connect to the database.
@@ -64,11 +129,24 @@ class MongoDB:
             await self.mongo.admin.command("ping")
             logger.info(f"Database connection successful. ({time() - start:.2f}s)")
             await self.load_cache()
+            
+            import asyncio
+            from anony import tasks
+            self._flusher_task = asyncio.create_task(self._stats_flusher())
+            self._admin_flusher_task = asyncio.create_task(self._admin_cache_flusher())
+            tasks.append(self._flusher_task)
+            tasks.append(self._admin_flusher_task)
         except Exception as e:
             raise SystemExit(f"Database connection failed: {type(e).__name__}") from e
 
     async def close(self) -> None:
         """Close the connection to the database."""
+        await self.flush_stats()
+        if self._flusher_task and not self._flusher_task.done():
+            self._flusher_task.cancel()
+        if self._admin_flusher_task and not self._admin_flusher_task.done():
+            self._admin_flusher_task.cancel()
+            
         await self.mongo.close()
         logger.info("Database connection closed.")
 
@@ -366,29 +444,36 @@ class MongoDB:
         day = now.strftime("%Y-%m-%d")
         week = now.strftime("%G-W%V")
 
-        user_set = {
-            "chat_id": chat_id,
-            "user_id": user_id,
-            "day": day,
-            "week": week,
-        }
+        user_id_str = f"{chat_id}:{user_id}:{day}"
+        if user_id_str not in self._stats_buffer["users"]:
+            self._stats_buffer["users"][user_id_str] = {
+                "count": 0,
+                "set": {
+                    "chat_id": chat_id,
+                    "user_id": user_id,
+                    "day": day,
+                    "week": week,
+                }
+            }
+            
+        self._stats_buffer["users"][user_id_str]["count"] += 1
         if name:
-            user_set["name"] = name
+            self._stats_buffer["users"][user_id_str]["set"]["name"] = name
 
-        chat_set = {"chat_id": chat_id, "day": day, "week": week}
+        chat_id_str = f"{chat_id}:{day}"
+        if chat_id_str not in self._stats_buffer["chats"]:
+            self._stats_buffer["chats"][chat_id_str] = {
+                "count": 0,
+                "set": {
+                    "chat_id": chat_id,
+                    "day": day,
+                    "week": week,
+                }
+            }
+            
+        self._stats_buffer["chats"][chat_id_str]["count"] += 1
         if chat_title:
-            chat_set["title"] = chat_title
-
-        await self.userstatsdb.update_one(
-            {"_id": f"{chat_id}:{user_id}:{day}"},
-            {"$inc": {"count": 1}, "$set": user_set},
-            upsert=True,
-        )
-        await self.chatstatsdb.update_one(
-            {"_id": f"{chat_id}:{day}"},
-            {"$inc": {"count": 1}, "$set": chat_set},
-            upsert=True,
-        )
+            self._stats_buffer["chats"][chat_id_str]["set"]["title"] = chat_title
 
     async def get_top_users(self, chat_id: int, period: str) -> list[dict]:
         match = {"chat_id": chat_id}
