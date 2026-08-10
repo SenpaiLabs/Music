@@ -366,7 +366,8 @@ class YouTube:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     try:
                         ydl.download([url])
-                    except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
+                    except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError) as e:
+                        logger.warning(f"yt-dlp error for {url}: {e}")
                         return None
                     except Exception as ex:
                         logger.warning("Download failed: %s", ex)
