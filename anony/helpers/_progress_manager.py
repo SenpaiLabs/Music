@@ -159,15 +159,15 @@ class ProgressManager:
         timer = None
         autoplay = None
         
-        if config.THUMB_GEN:
-            played = getattr(media, "time", 0)
-            duration = getattr(media, "duration_sec", 0)
-            remaining = max(duration - played, 0)
-            
-            pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
-            bar = "—" * pos + "◉" + "—" * (9 - pos)
-            timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
-        else:
+        played = getattr(media, "time", 0)
+        duration = getattr(media, "duration_sec", 0)
+        remaining = max(duration - played, 0)
+        
+        pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
+        bar = "—" * pos + "◉" + "—" * (9 - pos)
+        timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
+
+        if not config.THUMB_GEN:
             _lang = await lang.get_lang(chat_id)
             status = await db.get_autoplay(chat_id)
             autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
