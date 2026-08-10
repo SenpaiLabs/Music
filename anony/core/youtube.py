@@ -156,6 +156,11 @@ class YouTube:
                         return None
                     text = await resp.text()
 
+            current_title = "Unknown"
+            title_match = re.search(r"<title>(.*?)</title>", text)
+            if title_match:
+                current_title = title_match.group(1).replace(" - YouTube", "").strip()
+
             # Resilient extraction of API key and client version
             match = re.search(r'"INNERTUBE_API_KEY":"(.*?)"', text)
             if not match:
@@ -210,12 +215,31 @@ class YouTube:
             thumbnail = ""
             view_count = ""
 
+            def get_title_words(t):
+                t = re.sub(r'\(.*?\)', '', t)
+                t = re.sub(r'\[.*?\]', '', t)
+                t = t.lower()
+                for w in ['official', 'video', 'audio', 'lyric', 'lyrics', 'live', 'music', 'ft', 'feat', 'remix']:
+                    t = t.replace(w, '')
+                t = re.sub(r'[^a-z0-9\s]', '', t)
+                return set(t.split())
+            
+            curr_words = get_title_words(current_title) if current_title != "Unknown" else set()
+
             for rnd in videos:
                 vid = rnd.get("videoId")
                 if vid and vid != video_id and vid not in history:
-                    next_id = vid
                     title_obj = rnd.get("title", {})
-                    title = title_obj.get("simpleText") or (title_obj.get("runs", [{}])[0].get("text", "Unknown"))
+                    candidate_title = title_obj.get("simpleText") or (title_obj.get("runs", [{}])[0].get("text", "Unknown"))
+                    
+                    if curr_words:
+                        cand_words = get_title_words(candidate_title)
+                        sim = len(curr_words & cand_words) / len(curr_words | cand_words) if (curr_words or cand_words) else 0
+                        if sim >= 0.55:
+                            continue
+
+                    next_id = vid
+                    title = candidate_title
                     
                     len_obj = rnd.get("lengthText", {})
                     duration = len_obj.get("simpleText") or (len_obj.get("runs", [{}])[0].get("text", "0:00"))
