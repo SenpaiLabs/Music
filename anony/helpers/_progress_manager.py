@@ -149,6 +149,42 @@ class ProgressManager:
         if chat_id in self.pending_edits:
             del self.pending_edits[chat_id]
 
+    async def close_message(self, chat_id: int, media):
+        if not media or not getattr(media, "message_id", 0):
+            return
+            
+        from anony import app, config, lang, db
+        from anony.helpers import buttons
+        
+        timer = None
+        autoplay = None
+        
+        if config.THUMB_GEN:
+            played = getattr(media, "time", 0)
+            duration = getattr(media, "duration_sec", 0)
+            remaining = max(duration - played, 0)
+            
+            pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
+            bar = "—" * pos + "◉" + "—" * (9 - pos)
+            timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
+        else:
+            _lang = await lang.get_lang(chat_id)
+            status = await db.get_autoplay(chat_id)
+            autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
+                _lang.get("on", "On") if status else _lang.get("off", "Off")
+            )
+            
+        try:
+            await app.edit_message_reply_markup(
+                chat_id=chat_id,
+                message_id=media.message_id,
+                reply_markup=buttons.controls(
+                    chat_id=chat_id, timer=timer, autoplay=autoplay, remove=True
+                )
+            )
+        except Exception:
+            pass
+
     async def _chat_loop(self, chat_id: int):
         try:
             while True:
