@@ -110,13 +110,13 @@ class MongoDB:
             try:
                 await self.userstatsdb.bulk_write(user_updates)
             except Exception as e:
-                pass
+                logger.error(f"Error in userstatsdb bulk_write: {e}")
                 
         if chat_updates:
             try:
                 await self.chatstatsdb.bulk_write(chat_updates)
             except Exception as e:
-                pass
+                logger.error(f"Error in chatstatsdb bulk_write: {e}")
 
     async def connect(self) -> None:
         """Check if we can connect to the database.
