@@ -8,7 +8,7 @@ import asyncio
 from pyrogram import enums, errors, types
 
 from anony import app, config, db, logger, queue, yt
-from anony.helpers import utils
+from anony.helpers import utils, format_exception
 
 
 def checkUB(play):
@@ -87,7 +87,7 @@ def checkUB(play):
                         return await m.reply_text(m.lang["admin_required"])
                     except Exception as ex:
                         return await m.reply_text(
-                            m.lang["play_invite_error"].format(type(ex).__name__)
+                            m.lang["play_invite_error"].format(format_exception(ex))
                         )
 
                 umm = await m.reply_text(m.lang["play_invite"].format(app.name))
@@ -109,13 +109,13 @@ def checkUB(play):
                             pass
                         except Exception as ex:
                             return await umm.edit_text(
-                                m.lang["play_invite_error"].format(type(ex).__name__)
+                                m.lang["play_invite_error"].format(format_exception(ex))
                             )
                         break
                     except Exception as ex:
                         logger.error(f"Error joining chat - {chat_id}: {ex}")
                         return await umm.edit_text(
-                            m.lang["play_invite_error"].format(type(ex).__name__)
+                            m.lang["play_invite_error"].format(format_exception(ex))
                         )
                 else:
                     return await umm.edit_text(
