@@ -92,24 +92,34 @@ def checkUB(play):
 
                 umm = await m.reply_text(m.lang["play_invite"].format(app.name))
                 await asyncio.sleep(2)
-                try:
-                    await client.join_chat(invite_link)
-                except errors.UserAlreadyParticipant:
-                    pass
-                except errors.InviteRequestSent:
-                    await asyncio.sleep(2)
+                for _ in range(2):
                     try:
-                        await app.approve_chat_join_request(chat_id, client.id)
-                    except errors.HideRequesterMissing:
-                        pass
+                        await client.join_chat(invite_link)
+                        break
+                    except errors.FloodWait as fw:
+                        logger.warning(f"FloodWait on userbot join: sleeping {fw.value}s")
+                        await asyncio.sleep(fw.value + 1)
+                    except errors.UserAlreadyParticipant:
+                        break
+                    except errors.InviteRequestSent:
+                        await asyncio.sleep(2)
+                        try:
+                            await app.approve_chat_join_request(chat_id, client.id)
+                        except errors.HideRequesterMissing:
+                            pass
+                        except Exception as ex:
+                            return await umm.edit_text(
+                                m.lang["play_invite_error"].format(type(ex).__name__)
+                            )
+                        break
                     except Exception as ex:
+                        logger.error(f"Error joining chat - {chat_id}: {ex}")
                         return await umm.edit_text(
                             m.lang["play_invite_error"].format(type(ex).__name__)
                         )
-                except Exception as ex:
-                    logger.error(f"Error joining chat - {chat_id}: {ex}")
+                else:
                     return await umm.edit_text(
-                        m.lang["play_invite_error"].format(type(ex).__name__)
+                        m.lang["play_invite_error"].format("FloodWait Timeout")
                     )
 
                 await umm.delete()
