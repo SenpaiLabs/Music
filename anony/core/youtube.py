@@ -89,6 +89,7 @@ class YouTube:
                     "noplaylist": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
+                    "extract_flat": True,
                     "logger": YTDLLogger(),
                 }
                 if cookie:
