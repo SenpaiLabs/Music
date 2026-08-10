@@ -193,8 +193,9 @@ class YouTube:
             def extract_playlist_videos(obj):
                 videos = []
                 if isinstance(obj, dict):
-                    if "playlistPanelVideoRenderer" in obj:
-                        videos.append(obj["playlistPanelVideoRenderer"])
+                    for key in ["playlistPanelVideoRenderer", "compactVideoRenderer", "endScreenVideoRenderer", "watchCardCompactVideoRenderer"]:
+                        if key in obj:
+                            videos.append(obj[key])
                     for k, v in obj.items():
                         videos.extend(extract_playlist_videos(v))
                 elif isinstance(obj, list):

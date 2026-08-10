@@ -187,7 +187,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = "~=3.14.1" },
-    { name = "cachetools", specifier = "~=5.3.3" },
+    { name = "cachetools", specifier = ">=5.3.3,<7.2.0" },
     { name = "kurigram", specifier = ">=2.2.21" },
     { name = "pillow", specifier = "~=12.3.0" },
     { name = "psutil", specifier = "~=7.2.2" },
