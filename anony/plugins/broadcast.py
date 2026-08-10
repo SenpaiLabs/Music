@@ -25,7 +25,6 @@ async def _broadcast(_, message: types.Message):
 
     msg = message.reply_to_message
     copy = "-copy" in message.command
-    count, ucount = 0, 0
     groups, users = set(), set()
     sent = await message.reply_text(message.lang["gcast_start"])
 
