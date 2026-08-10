@@ -52,7 +52,7 @@ class ProgressManager:
     async def _worker_loop(self):
         while self.is_running:
             try:
-                chat_id, remaining_time, timer, needs_autoplay = await self.queue.get()
+                chat_id, remaining_time, timer, needs_autoplay, played = await self.queue.get()
                 
                 # Backpressure: If this isn't the latest queued update for this chat, drop it.
                 if self.pending_edits.get(chat_id) != remaining_time:
@@ -87,13 +87,40 @@ class ProgressManager:
                     )
 
                 try:
-                    await app.edit_message_reply_markup(
-                        chat_id=chat_id,
-                        message_id=media.message_id,
-                        reply_markup=buttons.controls(
-                            chat_id=chat_id, timer=timer, autoplay=autoplay, remove=False
+                    from anony import config
+                    if config.THUMB_GEN:
+                        await app.edit_message_reply_markup(
+                            chat_id=chat_id,
+                            message_id=media.message_id,
+                            reply_markup=buttons.controls(
+                                chat_id=chat_id, timer=timer, autoplay=autoplay, remove=False
+                            )
                         )
-                    )
+                    else:
+                        text = _lang["play_media"].format(
+                            media.url,
+                            media.title,
+                            f"{time.strftime('%M:%S', time.gmtime(played))} / {media.duration}",
+                            media.user,
+                        )
+                        markup = buttons.controls(
+                            chat_id=chat_id, timer=None, autoplay=autoplay, remove=False
+                        )
+                        try:
+                            await app.edit_message_text(
+                                chat_id=chat_id,
+                                message_id=media.message_id,
+                                text=text,
+                                reply_markup=markup,
+                                disable_web_page_preview=True
+                            )
+                        except Exception:
+                            await app.edit_message_caption(
+                                chat_id=chat_id,
+                                message_id=media.message_id,
+                                caption=text,
+                                reply_markup=markup,
+                            )
                 except MessageNotModified:
                     pass
                 except MessageIdInvalid:
@@ -160,11 +187,11 @@ class ProgressManager:
                     timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
                     needs_autoplay = False
                 else:
-                    timer = f"-{time.strftime('%M:%S', time.gmtime(remaining))}"
+                    timer = None
                     needs_autoplay = True
                 
                 self.pending_edits[chat_id] = remaining
-                await self.queue.put((chat_id, remaining, timer, needs_autoplay))
+                await self.queue.put((chat_id, remaining, timer, needs_autoplay, played))
                 
         except asyncio.CancelledError:
             pass
