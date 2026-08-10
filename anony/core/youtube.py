@@ -335,78 +335,47 @@ class YouTube:
                 except Exception as e:
                     logger.warning(f"Cache check failed for {video_id}: {e}")
 
-            cmd = [
-                sys.executable, "-m", "yt_dlp",
-                "--quiet",
-                "--no-playlist",
-                "--geo-bypass",
-                "--no-check-certificate",
-                "--print", "after_move:filepath",
-                "-o", filename
-            ]
+            cookie = self.get_cookies()
+            base_opts = {
+                "outtmpl": "downloads/%(id)s.%(ext)s",
+                "quiet": True,
+                "noplaylist": True,
+                "geo_bypass": True,
+                "no_warnings": True,
+                "overwrites": False,
+                "nocheckcertificate": True,
+                "logger": YTDLLogger(),
+            }
+            if cookie:
+                base_opts["cookiefile"] = cookie
 
             if video:
-                cmd.extend([
-                    "--format", "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
-                    "--merge-output-format", "mp4"
-                ])
+                ydl_opts = {
+                    **base_opts,
+                    "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                    "merge_output_format": "mp4",
+                }
             else:
-                cmd.extend([
-                    "--format", "bestaudio[ext=webm][acodec=opus]/bestaudio/best"
-                ])
+                ydl_opts = {
+                    **base_opts,
+                    "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
+                }
 
-            cookie = self.get_cookies()
-            if cookie:
-                cmd.extend(["--cookies", cookie])
+            def _download():
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    try:
+                        ydl.download([url])
+                    except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
+                        return None
+                    except Exception as ex:
+                        logger.warning("Download failed: %s", ex)
+                        return None
+                return filename
 
-            cmd.append(url)
+            result_filename = await asyncio.to_thread(_download)
 
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-
-            result_filename = None
-
-            async def read_stdout():
-                nonlocal result_filename
-                while True:
-                    line = await process.stdout.readline()
-                    if not line:
-                        break
-                    decoded_line = line.decode('utf-8').strip()
-                    if decoded_line and Path(decoded_line).exists():
-                        result_filename = decoded_line
-
-            async def read_stderr():
-                while True:
-                    line = await process.stderr.readline()
-                    if not line:
-                        break
-                    decoded_line = line.decode('utf-8').strip()
-                    if decoded_line.startswith("WARNING:"):
-                        logger.warning(decoded_line)
-                    elif decoded_line.startswith("ERROR:"):
-                        logger.error(decoded_line)
-                    else:
-                        logger.warning(f"yt-dlp stderr: {decoded_line}")
-
-            try:
-                await asyncio.wait_for(
-                    asyncio.gather(read_stdout(), read_stderr(), process.wait()),
-                    timeout=300
-                )
-            except asyncio.TimeoutError:
-                logger.error(f"yt-dlp download timed out for {video_id}, killing process.")
-                try:
-                    process.kill()
-                except ProcessLookupError:
-                    pass
-                return None
-
-            if process.returncode != 0 or not result_filename:
-                logger.warning(f"Download failed for {video_id} with returncode {process.returncode}")
+            if not result_filename or not Path(filename).exists():
+                logger.warning(f"Download failed for {video_id}")
                 if Path(filename).exists():
                     Path(filename).unlink()
                 return None
