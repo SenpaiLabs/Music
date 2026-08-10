@@ -193,6 +193,12 @@ class YouTube:
             if not next_id:
                 return None
                 
+            track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
+            if track:
+                track.channel_name = uploader
+                return track
+                
+            # Fallback if search fails
             parts = duration.split(":")
             if len(parts) == 3:
                 duration_sec = int(parts[0])*3600 + int(parts[1])*60 + int(parts[2])
