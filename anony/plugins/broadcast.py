@@ -9,6 +9,7 @@ import asyncio
 from pyrogram import errors, filters, types
 
 from anony import app, db, lang
+from anony.helpers import format_exception
 
 
 broadcasting = asyncio.Lock()
@@ -54,7 +55,7 @@ async def _broadcast(_, message: types.Message):
             except Exception as ex:
                 if not failed:
                     failed = open("errors.txt", "w")
-                failed.write(f"{chat} - {ex}\n")
+                failed.write(f"{chat} - \n{format_exception(ex)}\n")
                 continue
 
     text = message.lang["gcast_end"].format(count, ucount)
