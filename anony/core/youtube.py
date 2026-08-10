@@ -129,29 +129,53 @@ class YouTube:
                     if resp.status != 200:
                         return None
                     text = await resp.text()
-                    
-            match = re.search(r'var ytInitialData = (\{.*?\});</script>', text)
+
+            # Resilient extraction of API key and client version
+            match = re.search(r'"INNERTUBE_API_KEY":"(.*?)"', text)
             if not match:
+                logger.warning("Autoplay failed: INNERTUBE_API_KEY not found in HTML.")
                 return None
-                
-            import json
-            data = json.loads(match.group(1))
-            
-            def find_videos(obj):
+            api_key = match.group(1)
+
+            version_match = re.search(r'"INNERTUBE_CONTEXT_CLIENT_VERSION":"(.*?)"', text)
+            client_version = version_match.group(1) if version_match else "2.20230301.09.00"
+
+            payload = {
+                "context": {
+                    "client": {
+                        "clientName": "WEB",
+                        "clientVersion": client_version
+                    }
+                },
+                "videoId": video_id,
+                "playlistId": f"RD{video_id}"
+            }
+
+            url = f"https://www.youtube.com/youtubei/v1/next?key={api_key}"
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload) as resp:
+                    if resp.status != 200:
+                        logger.warning(f"Autoplay API failed with status {resp.status}")
+                        return None
+                    data = await resp.json()
+
+            def extract_playlist_videos(obj):
                 videos = []
                 if isinstance(obj, dict):
-                    if "compactVideoRenderer" in obj:
-                        videos.append(("compact", obj["compactVideoRenderer"]))
-                    if "lockupViewModel" in obj:
-                        videos.append(("lockup", obj["lockupViewModel"]))
+                    if "playlistPanelVideoRenderer" in obj:
+                        videos.append(obj["playlistPanelVideoRenderer"])
                     for k, v in obj.items():
-                        videos.extend(find_videos(v))
+                        videos.extend(extract_playlist_videos(v))
                 elif isinstance(obj, list):
                     for item in obj:
-                        videos.extend(find_videos(item))
+                        videos.extend(extract_playlist_videos(item))
                 return videos
-                
-            renderers = find_videos(data)
+
+            videos = extract_playlist_videos(data)
+            if not videos:
+                logger.warning("Autoplay failed: No playlistPanelVideoRenderer found in /next response.")
+                return None
+
             next_id = None
             title = "Unknown"
             duration = "0:00"
@@ -159,38 +183,28 @@ class YouTube:
             uploader = "Autoplay"
             thumbnail = ""
             view_count = ""
-            
-            for r_type, rnd in renderers:
-                if r_type == "compact":
-                    vid = rnd.get("videoId")
-                    if vid and vid != video_id and vid not in history:
-                        next_id = vid
-                        t_obj = rnd.get("title", {})
-                        title = t_obj.get("simpleText") or (t_obj.get("runs", [{}])[0].get("text", "Unknown"))
+
+            for rnd in videos:
+                vid = rnd.get("videoId")
+                if vid and vid != video_id and vid not in history:
+                    next_id = vid
+                    title_obj = rnd.get("title", {})
+                    title = title_obj.get("simpleText") or (title_obj.get("runs", [{}])[0].get("text", "Unknown"))
+                    
+                    len_obj = rnd.get("lengthText", {})
+                    duration = len_obj.get("simpleText") or (len_obj.get("runs", [{}])[0].get("text", "0:00"))
+                    
+                    upl_obj = rnd.get("shortBylineText", {})
+                    uploader = upl_obj.get("simpleText") or (upl_obj.get("runs", [{}])[0].get("text", uploader))
+                    
+                    thumbs = rnd.get("thumbnail", {}).get("thumbnails", [])
+                    if thumbs:
+                        thumbnail = thumbs[-1].get("url", "")
                         
-                        l_obj = rnd.get("lengthText", {})
-                        duration = l_obj.get("simpleText") or (l_obj.get("runs", [{}])[0].get("text", "0:00"))
-                        
-                        u_obj = rnd.get("shortBylineText", {})
-                        uploader = u_obj.get("simpleText") or (u_obj.get("runs", [{}])[0].get("text", uploader))
-                        
-                        thumbs = rnd.get("thumbnail", {}).get("thumbnails", [])
-                        if thumbs:
-                            thumbnail = thumbs[-1].get("url", "")
-                            
-                        v_obj = rnd.get("viewCountText", {})
-                        view_count = v_obj.get("simpleText") or (v_obj.get("runs", [{}])[0].get("text", ""))
-                        break
-                        
-                elif r_type == "lockup":
-                    vid = rnd.get("contentId")
-                    if vid and vid != video_id and vid not in history:
-                        next_id = vid
-                        m_obj = rnd.get("metadata", {}).get("lockupMetadataViewModel", {})
-                        title = m_obj.get("title", {}).get("content", "Unknown")
-                        break
+                    break
 
             if not next_id:
+                logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
                 return None
                 
             track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
