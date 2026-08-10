@@ -153,11 +153,8 @@ class ProgressManager:
         if not media or not getattr(media, "message_id", 0):
             return
             
-        from anony import app, config, lang, db
+        from anony import app
         from anony.helpers import buttons
-        
-        timer = None
-        autoplay = None
         
         played = getattr(media, "time", 0)
         duration = getattr(media, "duration_sec", 0)
@@ -167,19 +164,12 @@ class ProgressManager:
         bar = "—" * pos + "◉" + "—" * (9 - pos)
         timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
 
-        if not config.THUMB_GEN:
-            _lang = await lang.get_lang(chat_id)
-            status = await db.get_autoplay(chat_id)
-            autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
-                _lang.get("on", "On") if status else _lang.get("off", "Off")
-            )
-            
         try:
             await app.edit_message_reply_markup(
                 chat_id=chat_id,
                 message_id=media.message_id,
                 reply_markup=buttons.controls(
-                    chat_id=chat_id, timer=timer, autoplay=autoplay, remove=True
+                    chat_id=chat_id, timer=timer, autoplay=None, remove=True
                 )
             )
         except Exception:
