@@ -162,7 +162,7 @@ class ProgressManager:
         
         pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
         bar = "—" * pos + "◉" + "—" * (9 - pos)
-        timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
+        timer = bar
 
         try:
             await app.edit_message_reply_markup(
