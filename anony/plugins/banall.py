@@ -41,7 +41,7 @@ async def _worker(
             break
 
         await circuit_breaker.wait()
-        
+
         if chat_id not in active_ops:
             queue.task_done()
             continue
@@ -62,7 +62,7 @@ async def _worker(
             circuit_breaker.set()
         except Exception:
             stats["failed"] += 1
-        
+
         queue.task_done()
 
 
@@ -88,7 +88,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
 
     labels = {"ban": "purge_op_ban", "kick": "purge_op_kick", "unban": "purge_op_unban"}
     label = message.lang[labels[op]]
-    
+
     progress = await message.reply_text(
         message.lang["purge_start"].format(label)
     )
@@ -96,7 +96,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
     start_time = time.time()
     stats = {"total": 0, "done": 0, "failed": 0}
     target_ids = []
-    
+
     try:
         if op in ("ban", "kick"):
             admins = await reload_admins(target_chat_id)
@@ -104,28 +104,28 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
                 user = member.user
                 if not user or user.id in admins or user.id == app.id:
                     continue
-                
+
                 # Apply Targeted Purge Filters
                 if filter_type == "bots" and not user.is_bot:
                     continue
                 if filter_type == "deleted" and not user.is_deleted:
                     continue
-                    
+
                 target_ids.append(user.id)
         else:
             async for member in app.get_chat_members(target_chat_id, filter=enums.ChatMembersFilter.BANNED):
                 if member.user:
                     target_ids.append(member.user.id)
-                    
+
         total_targets = len(target_ids)
-        
+
         # Dry-Run Mode
         if is_test:
             active_ops.pop(target_chat_id, None)
             eta_sec = total_targets * 0.15
             eta_str = f"{int(eta_sec)}s" if eta_sec < 60 else f"{int(eta_sec // 60)}m {int(eta_sec % 60)}s"
             filter_str = filter_type.capitalize() if filter_type else message.lang["purge_all_users"]
-            
+
             res_msg = await progress.edit_text(
                 message.lang["purge_test_result"].format(
                     label, filter_str, total_targets, eta_str
@@ -159,7 +159,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
             await asyncio.sleep(2)
             if target_chat_id not in active_ops:
                 break
-                
+
             now = time.time()
             if now - last_update >= 3.0:
                 elapsed = now - start_time
@@ -169,9 +169,9 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
                     eta_str = f"{int(eta_sec)}s" if eta_sec < 60 else f"{int(eta_sec // 60)}m {int(eta_sec % 60)}s"
                 else:
                     eta_str = message.lang["purge_calc"]
-                    
+
                 pct = (done_total / total_targets) * 100 if total_targets else 0
-                
+
                 try:
                     await progress.edit_text(
                         message.lang["purge_progress"].format(
@@ -189,7 +189,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
         if target_chat_id in active_ops:
             final_time = time.time() - start_time
             time_str = f"{int(final_time)}s" if final_time < 60 else f"{int(final_time // 60)}m {int(final_time % 60)}s"
-            
+
             res_msg = await progress.edit_text(
                 message.lang["purge_complete"].format(
                     label, stats["total"], stats["done"], stats["failed"]
@@ -204,7 +204,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
             try:
                 target_chat_obj = await app.get_chat(target_chat_id)
                 chat_title = target_chat_obj.title or "Unknown Chat"
-                
+
                 filter_str = filter_type.capitalize() if filter_type else message.lang["purge_all_users"]
                 log_text = message.lang["purge_log_report"].format(
                     chat_title, target_chat_id,
@@ -228,41 +228,41 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
 @lang.language()
 async def handle_purge_cmds(_, m: Message):
     cmd = m.command[0].lower()
-    
+
     op = "unban" if "unbanall" == cmd else "kick" if "kickall" == cmd else "ban"
-    
+
     args = [arg.lower() for arg in m.command[1:]]
     is_test = "-test" in args
-    
+
     filter_type = None
     if "bots" in args:
         filter_type = "bots"
     elif "deleted" in args:
         filter_type = "deleted"
-        
+
     target_chat_id = m.chat.id
     target_arg = None
-    
+
     for arg in args:
         if arg not in ("-test", "bots", "deleted"):
             target_arg = arg
             break
-            
+
     if target_arg:
         try:
             if target_arg.startswith("-") or target_arg.isdigit():
                 target_chat_id = int(target_arg)
             else:
                 target_chat_id = target_arg
-                
+
             chat = await app.get_chat(target_chat_id)
             target_chat_id = chat.id
         except Exception:
             return await m.reply_text("Invalid Chat ID or Username.")
-            
+
     if m.chat.type == enums.ChatType.PRIVATE and target_chat_id == m.chat.id:
         return await m.reply_text("Please provide a group Chat ID or Username. Example: `/banall -1001234567890`")
-        
+
     await purge_chat(m, target_chat_id, op, is_test, filter_type)
 
 

@@ -27,7 +27,7 @@ class TokenBucket:
                 if self._tokens >= tokens:
                     self._tokens -= tokens
                     return
-                
+
                 # Wait until enough tokens are available
                 wait_time = (tokens - self._tokens) / self.fill_rate
                 await asyncio.sleep(wait_time)
@@ -53,12 +53,12 @@ class ProgressManager:
         while self.is_running:
             try:
                 chat_id, remaining_time, timer, needs_autoplay, played = await self.queue.get()
-                
+
                 # Backpressure: If this isn't the latest queued update for this chat, drop it.
                 if self.pending_edits.get(chat_id) != remaining_time:
                     self.queue.task_done()
                     continue
-                
+
                 # Clear pending status since we are processing it
                 if chat_id in self.pending_edits:
                     del self.pending_edits[chat_id]
@@ -77,7 +77,7 @@ class ProgressManager:
 
                 # Token bucket consume (Rate Limiting)
                 await self.rate_limiter.consume(1)
-                
+
                 autoplay = None
                 if needs_autoplay:
                     _lang = await lang.get_lang(chat_id)
@@ -152,14 +152,13 @@ class ProgressManager:
     async def close_message(self, chat_id: int, media):
         if not media or not getattr(media, "message_id", 0):
             return
-            
+
         from anony import app
         from anony.helpers import buttons
-        
+
         played = getattr(media, "time", 0)
         duration = getattr(media, "duration_sec", 0)
-        remaining = max(duration - played, 0)
-        
+
         pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
         bar = "—" * pos + "◉" + "—" * (9 - pos)
         timer = bar
@@ -180,20 +179,20 @@ class ProgressManager:
             while True:
                 # Jittered interval 4-7 seconds
                 await asyncio.sleep(random.uniform(4.0, 7.0))
-                
+
                 from anony import db, queue
-                
+
                 if not await db.playing(chat_id):
                     continue
-                
+
                 media = queue.get_current(chat_id)
                 if not media or not media.duration_sec or not media.time:
                     continue
-                
+
                 played = media.time
                 duration = media.duration_sec
                 remaining = max(duration - played, 0)
-                
+
                 if remaining <= 30:
                     next_track = queue.get_next(chat_id, check=True)
                     if next_track and not next_track.file_path:
@@ -202,10 +201,10 @@ class ProgressManager:
                         asyncio.create_task(yt.download(next_track.id, video=next_track.video))
                         # Prevent duplicate downloads by immediately assigning a dummy path or letting download handle duplicates
                         next_track.file_path = "downloading"
-                        
+
                 if remaining < 10:
                     continue # handled by remove=True in main update loop or stop
-                
+
                 from anony import config
                 if config.THUMB_GEN:
                     pos = min(int((played / duration) * 10), 9)
@@ -215,10 +214,10 @@ class ProgressManager:
                 else:
                     timer = None
                     needs_autoplay = True
-                
+
                 self.pending_edits[chat_id] = remaining
                 await self.queue.put((chat_id, remaining, timer, needs_autoplay, played))
-                
+
         except asyncio.CancelledError:
             pass
         except Exception:

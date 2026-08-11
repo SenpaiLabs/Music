@@ -245,8 +245,6 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
                 reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
             )
 
-        ids = [entry["_id"] for entry in top]
-
         text = query.lang[f"leaderboard_{period}_title"]
         for i, entry in enumerate(top, start=1):
             mention = entry.get("name")
