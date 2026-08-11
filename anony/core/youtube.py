@@ -5,7 +5,6 @@
 
 import os
 import re
-import sys
 import time
 import yt_dlp
 import random
@@ -13,10 +12,10 @@ import asyncio
 import aiohttp
 from pathlib import Path
 
-from py_yt import Playlist, VideosSearch
+from py_yt import Playlist
 
 from anony import logger
-from anony.helpers import Track, utils
+from anony.helpers import Track
 
 
 class YTDLLogger:
@@ -88,7 +87,7 @@ class YouTube:
                 }
                 if cookie:
                     opts["cookiefile"] = cookie
-                
+
                 search_query = query if self.valid(query) or "youtube.com" in query else f"ytsearch1:{query}"
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     return ydl.extract_info(search_query, download=False)
@@ -96,7 +95,7 @@ class YouTube:
             info = await asyncio.to_thread(_extract)
             if not info:
                 return None
-            
+
             if "entries" in info:
                 if not info["entries"]:
                     return None
@@ -218,7 +217,7 @@ class YouTube:
                     t = t.replace(w, '')
                 t = re.sub(r'[^a-z0-9\s]', '', t)
                 return set(t.split())
-            
+
             curr_words = get_title_words(current_title) if current_title != "Unknown" else set()
 
             for rnd in videos:
@@ -226,7 +225,7 @@ class YouTube:
                 if vid and vid != video_id and vid not in history:
                     title_obj = rnd.get("title", {})
                     candidate_title = title_obj.get("simpleText") or (title_obj.get("runs", [{}])[0].get("text", "Unknown"))
-                    
+
                     if curr_words:
                         cand_words = get_title_words(candidate_title)
                         sim = len(curr_words & cand_words) / len(curr_words | cand_words) if (curr_words or cand_words) else 0
@@ -235,28 +234,28 @@ class YouTube:
 
                     next_id = vid
                     title = candidate_title
-                    
+
                     len_obj = rnd.get("lengthText", {})
                     duration = len_obj.get("simpleText") or (len_obj.get("runs", [{}])[0].get("text", "0:00"))
-                    
+
                     upl_obj = rnd.get("shortBylineText", {})
                     uploader = upl_obj.get("simpleText") or (upl_obj.get("runs", [{}])[0].get("text", uploader))
-                    
+
                     thumbs = rnd.get("thumbnail", {}).get("thumbnails", [])
                     if thumbs:
                         thumbnail = thumbs[-1].get("url", "")
-                        
+
                     break
 
             if not next_id:
                 logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
                 return None
-                
+
             track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
             if track:
                 track.channel_name = uploader
                 return track
-                
+
             # Fallback if search fails
             parts = duration.split(":")
             if len(parts) == 3:
@@ -310,7 +309,7 @@ class YouTube:
                                     return downloaded_path
                         except Exception:
                             pass
-                        
+
                         if cache_data.get("msg_id"):
                             try:
                                 msg = await app.get_messages(config.DB_CHANNEL, cache_data["msg_id"])
@@ -378,13 +377,13 @@ class YouTube:
                             sent = await app.send_video(config.DB_CHANNEL, video=result_filename, duration=duration_sec)
                         else:
                             sent = await app.send_audio(config.DB_CHANNEL, audio=result_filename, title=title, duration=duration_sec)
-                        
+
                         if sent:
                             media = sent.video or sent.audio or sent.voice or sent.document
                             if not media:
                                 logger.warning(f"Failed to find media attribute in sent message for {video_id}")
                                 return
-                            
+
                             file_id = getattr(media, "file_id", None)
                             if file_id:
                                 await db.save_song_cache(
@@ -392,7 +391,7 @@ class YouTube:
                                 )
                     except Exception as e:
                         logger.warning(f"Background cache upload failed for {video_id}: {e}")
-                
+
                 asyncio.create_task(_upload_to_cache())
 
             return result_filename

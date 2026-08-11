@@ -31,7 +31,6 @@ class MongoDB:
         self.notified = []
         self.cache = self.db.cache
         self.song_cache = self.db.song_cache
-        self.logger = False
 
         self.assistant = {}
         self.assistantdb = self.db.assistant
@@ -52,7 +51,7 @@ class MongoDB:
         self.usersdb = self.db.users
 
         self.afkdb = self.db.afk
-        
+
         self._stats_buffer = {"users": {}, "chats": {}}
         self._flusher_task = None
         self._admin_flusher_task = None
@@ -70,7 +69,7 @@ class MongoDB:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                self.logger.error(f"Error in admin cache flusher: {e}") if getattr(self, "logger", None) else print(e)
+                logger.error(f"Error in admin cache flusher: {e}")
 
     async def _stats_flusher(self) -> None:
         import asyncio
@@ -81,7 +80,7 @@ class MongoDB:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                self.logger.error(f"Error in DB stats flusher: {e}") if getattr(self, "logger", None) else print(e)
+                logger.error(f"Error in DB stats flusher: {e}")
 
     async def flush_stats(self) -> None:
         buffer = self._stats_buffer
@@ -97,7 +96,7 @@ class MongoDB:
                 upsert=True
             ) for _id, data in buffer["users"].items()
         ]
-        
+
         chat_updates = [
             UpdateOne(
                 {"_id": _id},
@@ -111,7 +110,7 @@ class MongoDB:
                 await self.userstatsdb.bulk_write(user_updates)
             except Exception as e:
                 logger.error(f"Error in userstatsdb bulk_write: {e}")
-                
+
         if chat_updates:
             try:
                 await self.chatstatsdb.bulk_write(chat_updates)
@@ -129,7 +128,7 @@ class MongoDB:
             await self.mongo.admin.command("ping")
             logger.info(f"Database connection successful. ({time() - start:.2f}s)")
             await self.load_cache()
-            
+
             import asyncio
             from anony import tasks
             self._flusher_task = asyncio.create_task(self._stats_flusher())
@@ -146,7 +145,7 @@ class MongoDB:
             self._flusher_task.cancel()
         if self._admin_flusher_task and not self._admin_flusher_task.done():
             self._admin_flusher_task.cancel()
-            
+
         await self.mongo.close()
         logger.info("Database connection closed.")
 
@@ -455,7 +454,7 @@ class MongoDB:
                     "week": week,
                 }
             }
-            
+
         self._stats_buffer["users"][user_id_str]["count"] += 1
         if name:
             self._stats_buffer["users"][user_id_str]["set"]["name"] = name
@@ -470,7 +469,7 @@ class MongoDB:
                     "week": week,
                 }
             }
-            
+
         self._stats_buffer["chats"][chat_id_str]["count"] += 1
         if chat_title:
             self._stats_buffer["chats"][chat_id_str]["set"]["title"] = chat_title

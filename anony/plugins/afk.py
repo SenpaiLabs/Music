@@ -18,7 +18,7 @@ def get_readable_time(seconds: int) -> str:
 
     if seconds == 0:
         return "0s"
-        
+
     while count < 4:
         count += 1
         remainder, result = divmod(seconds, 60) if count < 3 else divmod(seconds, 24)
@@ -44,19 +44,19 @@ async def _afk_cmd(_, m: types.Message):
         reason = ""
     else:
         reason = m.text.split(None, 1)[1]
-        
+
     afk_user = await db.is_afk(m.from_user.id)
     if afk_user:
         since = int(time.time() - afk_user["time"])
         time_str = get_readable_time(since)
         await db.remove_afk(m.from_user.id)
         await m.reply_text(m.lang["afk_removed"].format(m.from_user.first_name, time_str))
-    
+
     details = {
         "time": time.time(),
         "reason": reason,
     }
-    
+
     await db.add_afk(m.from_user.id, details)
     await m.reply_text(m.lang["afk_set"].format(m.from_user.first_name, f"\nReason: {reason}" if reason else ""))
 
@@ -72,7 +72,7 @@ async def _afk_watcher(_, m: types.Message):
             time_str = get_readable_time(since)
             await db.remove_afk(m.from_user.id)
             await m.reply_text(m.lang["afk_removed"].format(m.from_user.first_name, time_str))
-            
+
     # Check if a mentioned user is AFK
     if m.entities:
         for entity in m.entities:

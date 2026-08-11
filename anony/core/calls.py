@@ -39,7 +39,7 @@ class TgCall(PyTgCalls):
         progress_manager.deregister(chat_id)
         client = await db.get_assistant(chat_id)
         current = queue.get_current(chat_id)
-        
+
         if current:
             await progress_manager.close_message(chat_id, current)
 
@@ -116,7 +116,7 @@ class TgCall(PyTgCalls):
                     media.user,
                 )
                 keyboard = buttons.controls(chat_id)
-                
+
                 for _ in range(2):
                     try:
                         try:
@@ -149,7 +149,7 @@ class TgCall(PyTgCalls):
                     except errors.FloodWait as fw:
                         logger.warning(f"FloodWait on Now Playing message: sleeping {fw.value}s (chat {chat_id})")
                         await asyncio.sleep(fw.value)
-                        
+
                 if not config.THUMB_GEN:
                     progress_manager.register(chat_id)
 
@@ -207,16 +207,16 @@ class TgCall(PyTgCalls):
                         call=input_call, ids=[], sources=[], offset=offset, limit=100
                     )
                 )
-                
+
                 for p in result.participants:
                     user_id = getattr(p.peer, "user_id", None)
                     if user_id and user_id != assistant_id:
                         return False
-                        
+
                 if not getattr(result, "next_offset", None):
                     break
                 offset = result.next_offset
-                
+
             return True
         except Exception:
             return False
@@ -227,7 +227,7 @@ class TgCall(PyTgCalls):
             return
 
         media = queue.get_current(chat_id)
-        
+
         if media:
             await progress_manager.close_message(chat_id, media)
 
@@ -243,7 +243,7 @@ class TgCall(PyTgCalls):
             return await self.replay(chat_id)
 
         last_track = queue.get_current(chat_id)
-        
+
         if last_track:
             await progress_manager.close_message(chat_id, last_track)
 
