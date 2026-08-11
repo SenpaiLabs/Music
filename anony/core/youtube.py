@@ -6,6 +6,7 @@
 import os
 import re
 import sys
+import time
 import yt_dlp
 import random
 import asyncio
@@ -19,14 +20,7 @@ from anony.helpers import Track, utils
 
 
 class YTDLLogger:
-    def debug(self, msg):
-        pass
-
-    def warning(self, msg):
-        pass
-
-    def error(self, msg):
-        pass
+    debug = warning = error = lambda self, msg: None
 
 
 class YouTube:
@@ -113,7 +107,7 @@ class YouTube:
             return Track(
                 id=data.get("id"),
                 channel_name=data.get("uploader"),
-                duration=self.format_duration(int(data.get("duration", 0))),
+                duration=time.strftime("%M:%S", time.gmtime(int(data.get("duration", 0)))),
                 duration_sec=int(data.get("duration", 0)),
                 message_id=m_id,
                 title=data.get("title", "")[:25],
@@ -135,7 +129,7 @@ class YouTube:
                     id=data.get("id"),
                     channel_name=data.get("channel", {}).get("name", ""),
                     duration=data.get("duration"),
-                    duration_sec=utils.to_seconds(data.get("duration")),
+                    duration_sec=sum(int(x) * 60**i for i, x in enumerate(reversed(str(data.get("duration") or "0").split(":")))),
                     title=data.get("title")[:25],
                     thumbnail=data.get("thumbnails")[-1].get("url").split("?")[0],
                     url=data.get("link").split("&list=")[0],
@@ -286,13 +280,7 @@ class YouTube:
             logger.warning(f"Autoplay fetch failed: {e}")
             return None
 
-    @staticmethod
-    def format_duration(seconds: int) -> str:
-        if seconds <= 0:
-            return "0:00"
-        h, rem = divmod(seconds, 3600)
-        m, s = divmod(rem, 60)
-        return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
 
     async def download(
         self, video_id: str, video: bool = False, title: str = "", duration: str = "", duration_sec: int = 0

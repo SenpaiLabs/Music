@@ -73,7 +73,7 @@ class Telegram:
             self.last_edit[msg_id] = now
             percent = current * 100 / total
             speed = current / (now - start_time or 1e-6)
-            eta = utils.format_eta(int((total - current) / speed))
+            eta = time.strftime("%H:%M:%S", time.gmtime(int((total - current) / speed)))
             text = sent.lang["dl_progress"].format(
                 utils.format_size(current),
                 utils.format_size(total),

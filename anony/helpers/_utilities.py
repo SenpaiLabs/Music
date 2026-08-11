@@ -3,6 +3,7 @@
 # This file is part of AnonXMusic
 
 
+import os
 import re
 
 from pyrogram import enums, types
@@ -14,16 +15,15 @@ class Utilities:
     def __init__(self):
         pass
 
-    def format_eta(self, seconds: int) -> str:
-        if seconds < 60:
-            return f"{seconds}s"
-        elif seconds < 3600:
-            return f"{seconds // 60}:{seconds % 60:02d} min"
-        else:
-            h = seconds // 3600
-            m = (seconds % 3600) // 60
-            s = seconds % 60
-            return f"{h}:{m:02d}:{s:02d} h"
+    def clear_cache(self, media) -> None:
+        from anony import config
+        if config.DB_CHANNEL and media and getattr(media, "file_path", None):
+            if os.path.isfile(media.file_path):
+                try:
+                    os.remove(media.file_path)
+                except Exception:
+                    pass
+
 
     def format_size(self, bytes: int) -> str:
         if bytes >= 1024**3:
@@ -33,9 +33,7 @@ class Utilities:
         else:
             return f"{bytes / 1024:.2f} KB"
 
-    def to_seconds(self, time: str) -> int:
-        parts = [int(p) for p in time.strip().split(":")]
-        return sum(value * 60**i for i, value in enumerate(reversed(parts)))
+
 
 
     def get_url(self, message_1: types.Message) -> str | None:
@@ -73,12 +71,10 @@ class Utilities:
                 if e.type == enums.MessageEntityType.TEXT_MENTION:
                     return e.user
 
-        if msg.text:
+        if len(getattr(msg, "command", [])) > 1:
+            arg = msg.command[1]
             try:
-                if m := re.search(r"@(\w{5,32})", msg.text):
-                    return await app.get_users(m.group(0))
-                if m := re.search(r"\b\d{6,15}\b", msg.text):
-                    return await app.get_users(int(m.group(0)))
+                return await app.get_users(int(arg) if arg.isdigit() else arg)
             except Exception:
                 pass
 
