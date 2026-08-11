@@ -3,13 +3,12 @@
 # This file is part of AnonXMusic
 
 
-import time
 import asyncio
 
 from pyrogram import enums, errors, filters, types
 from pyrogram.raw.types import UpdateGroupCallParticipants
 
-from anony import anon, app, config, db, lang, queue, tasks, userbot, yt
+from anony import anon, app, config, db, lang, queue, tasks, userbot
 from anony.helpers import buttons
 
 
@@ -74,11 +73,11 @@ async def _vc_watcher_event(client, update, users, chats):
         for chat_id, chat in chats.items():
             if not await db.playing(chat_id):
                 continue
-                
+
             media = queue.get_current(chat_id)
             if not media or getattr(media, "time", 0) < 30:
                 continue
-                
+
             # Triggered when participants change. Check if empty.
             is_empty = await anon.is_vc_empty(chat_id)
             if is_empty:
@@ -95,7 +94,7 @@ async def _vc_watcher_event(client, update, users, chats):
                     pass
                 except Exception:
                     pass
-                
+
                 await anon.stop(chat_id)
                 try:
                     await app.send_message(chat_id=chat_id, text=_lang["auto_left"])

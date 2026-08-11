@@ -9,7 +9,6 @@ import asyncio
 from pyrogram import errors, filters, types
 
 from anony import app, db, lang
-from anony.helpers import format_exception
 
 
 broadcasting = asyncio.Lock()
@@ -39,21 +38,21 @@ async def _broadcast(_, message: types.Message):
     async with broadcasting:
         stats = {"count": 0, "ucount": 0}
         failed_list = []
-        
+
         queue = asyncio.Queue()
         for chat in chats:
             queue.put_nowait(chat)
-            
+
         circuit_breaker = asyncio.Event()
         circuit_breaker.set()
-        
+
         async def _worker():
             while True:
                 try:
                     chat = queue.get_nowait()
                 except asyncio.QueueEmpty:
                     break
-                    
+
                 await circuit_breaker.wait()
                 try:
                     (
@@ -85,18 +84,18 @@ async def _broadcast(_, message: types.Message):
                     failed_list.append(f"{chat} - Cleaned from DB: {ex.__class__.__name__}\n")
                 except Exception as ex:
                     failed_list.append(f"{chat} - {ex.__class__.__name__}: {str(ex)}\n")
-                
+
                 queue.task_done()
-                
+
         workers = [asyncio.create_task(_worker()) for _ in range(20)]
         await queue.join()
-        
+
         for w in workers:
             w.cancel()
-            
+
         count = stats["count"]
         ucount = stats["ucount"]
-        
+
         if failed_list:
             failed = open("errors.txt", "w")
             failed.writelines(failed_list)
