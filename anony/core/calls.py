@@ -43,11 +43,7 @@ class TgCall(PyTgCalls):
         if current:
             await progress_manager.close_message(chat_id, current)
 
-        if config.DB_CHANNEL and current and getattr(current, "file_path", None):
-            import os
-            if os.path.isfile(current.file_path):
-                try: os.remove(current.file_path)
-                except Exception: pass
+        utils.clear_cache(current)
         queue.clear(chat_id)
         await db.remove_call(chat_id)
         await db.set_loop(chat_id, 0)
@@ -251,11 +247,7 @@ class TgCall(PyTgCalls):
         if last_track:
             await progress_manager.close_message(chat_id, last_track)
 
-        if config.DB_CHANNEL and last_track and getattr(last_track, "file_path", None):
-            import os
-            if os.path.isfile(last_track.file_path):
-                try: os.remove(last_track.file_path)
-                except Exception: pass
+        utils.clear_cache(last_track)
         media = queue.get_next(chat_id)
         try:
             if media and media.message_id:
