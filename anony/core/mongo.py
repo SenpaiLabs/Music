@@ -21,6 +21,9 @@ class MongoDB:
         self.mongo = AsyncMongoClient(config.MONGO_URL, serverSelectionTimeoutMS=12500)
         self.db = self.mongo.Anon
 
+        self.song_cache_mongo = AsyncMongoClient(config.SONG_CACHE_MONGO_URI, serverSelectionTimeoutMS=12500)
+        self.song_cache_db = self.song_cache_mongo.AnonSongCache
+
         self.admin_list = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
         self.active_calls = {}
         self.admin_play = []
@@ -30,7 +33,7 @@ class MongoDB:
         self.loop = {}
         self.notified = []
         self.cache = self.db.cache
-        self.song_cache = self.db.song_cache
+        self.song_cache = self.song_cache_db.song_cache
 
         self.assistant = {}
         self.assistantdb = self.db.assistant
@@ -123,10 +126,24 @@ class MongoDB:
         Raises:
             SystemExit: If the connection to the database fails.
         """
+        start = time()
+        
         try:
-            start = time()
             await self.mongo.admin.command("ping")
-            logger.info(f"Database connection successful. ({time() - start:.2f}s)")
+            logger.info(f"Primary MongoDB connected. ({time() - start:.2f}s)")
+        except Exception as e:
+            logger.error(f"Failed to connect to Primary MongoDB.")
+            raise SystemExit(f"Primary MongoDB connection failed: {type(e).__name__}") from e
+
+        start = time()
+        try:
+            await self.song_cache_mongo.admin.command("ping")
+            logger.info(f"Song Cache MongoDB connected. ({time() - start:.2f}s)")
+        except Exception as e:
+            logger.error(f"Failed to connect to Song Cache MongoDB.")
+            raise SystemExit(f"Song Cache MongoDB connection failed: {type(e).__name__}") from e
+            
+        try:
             await self.load_cache()
 
             import asyncio
@@ -136,7 +153,7 @@ class MongoDB:
             tasks.append(self._flusher_task)
             tasks.append(self._admin_flusher_task)
         except Exception as e:
-            raise SystemExit(f"Database connection failed: {type(e).__name__}") from e
+            raise SystemExit(f"Failed to load cache or start flusher tasks: {type(e).__name__}") from e
 
     async def close(self) -> None:
         """Close the connection to the database."""
@@ -147,7 +164,10 @@ class MongoDB:
             self._admin_flusher_task.cancel()
 
         await self.mongo.close()
-        logger.info("Database connection closed.")
+        logger.info("Primary MongoDB connection closed.")
+        
+        await self.song_cache_mongo.close()
+        logger.info("Song Cache MongoDB connection closed.")
 
     # SONG CACHE METHODS
     async def get_song_cache(self, video_id: str, video: bool) -> dict | None:

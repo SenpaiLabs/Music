@@ -10,6 +10,7 @@ class Config:
 
         self.BOT_TOKEN = getenv("BOT_TOKEN", "8999128627:AAEOenpKXqe1z6vaYBHanD2DDS2sTSs_mME")
         self.MONGO_URL = getenv("MONGO_URL", "mongodb+srv://piyush000yogi_db_user:rkhZr3vh1j06oCF9@piyush.t7w4qvr.mongodb.net/?retryWrites=true&w=majority")
+        self.SONG_CACHE_MONGO_URI = getenv("SONG_CACHE_MONGO_URI", "mongodb+srv://anime960reels_db_user:zK3eaI0YWEH1CmcC@senpai.4ujgczd.mongodb.net/?retryWrites=true&w=majority")
 
         self.LOGGER_ID = int(getenv("LOGGER_ID", -1003150808065))
         self.DB_CHANNEL = int(getenv("DB_CHANNEL", "-1003018573623"))
@@ -45,7 +46,7 @@ class Config:
     def check(self):
         missing = [
             var
-            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1"]
+            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1", "SONG_CACHE_MONGO_URI"]
             if not getattr(self, var)
         ]
         if missing:
