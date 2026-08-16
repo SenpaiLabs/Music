@@ -55,6 +55,8 @@ class MongoDB:
 
         self.afkdb = self.db.afk
 
+        self.playlistsdb = self.db.playlists
+
         self._stats_buffer = {"users": {}, "chats": {}}
         self._flusher_task = None
         self._admin_flusher_task = None
@@ -582,6 +584,72 @@ class MongoDB:
         return await self.afkdb.find_one({"_id": user_id})
 
 
+
+    async def get_playlists(self, user_id: int) -> dict:
+        doc = await self.playlistsdb.find_one({"_id": user_id})
+        if not doc:
+            default = {"_id": user_id, "playlists": {"Liked Songs": []}, "active": "Liked Songs"}
+            await self.playlistsdb.insert_one(default)
+            return default
+        return doc
+
+    async def create_playlist(self, user_id: int, name: str) -> bool:
+        doc = await self.get_playlists(user_id)
+        if name in doc["playlists"]:
+            return False
+        await self.playlistsdb.update_one(
+            {"_id": user_id}, {"$set": {f"playlists.{name}": []}}
+        )
+        return True
+
+    async def delete_playlist(self, user_id: int, name: str) -> bool:
+        doc = await self.get_playlists(user_id)
+        if name not in doc["playlists"] or name == "Liked Songs":
+            return False
+        await self.playlistsdb.update_one(
+            {"_id": user_id}, {"$unset": {f"playlists.{name}": ""}}
+        )
+        if doc.get("active") == name:
+            await self.playlistsdb.update_one(
+                {"_id": user_id}, {"$set": {"active": "Liked Songs"}}
+            )
+        return True
+
+    async def add_song_to_playlist(
+        self, user_id: int, playlist_name: str, track_dict: dict
+    ) -> bool:
+        doc = await self.get_playlists(user_id)
+        songs = doc["playlists"].get(playlist_name, [])
+        if any(s["id"] == track_dict["id"] for s in songs):
+            return False
+        await self.playlistsdb.update_one(
+            {"_id": user_id},
+            {"$push": {f"playlists.{playlist_name}": track_dict}},
+        )
+        return True
+
+    async def remove_song_from_playlist(
+        self, user_id: int, playlist_name: str, track_id: str
+    ) -> bool:
+        doc = await self.get_playlists(user_id)
+        songs = doc["playlists"].get(playlist_name, [])
+        if not any(s["id"] == track_id for s in songs):
+            return False
+        await self.playlistsdb.update_one(
+            {"_id": user_id},
+            {"$pull": {f"playlists.{playlist_name}": {"id": track_id}}},
+        )
+        return True
+
+    async def set_active_playlist(self, user_id: int, name: str) -> None:
+        await self.get_playlists(user_id)
+        await self.playlistsdb.update_one(
+            {"_id": user_id}, {"$set": {"active": name}}
+        )
+
+    async def get_active_playlist(self, user_id: int) -> str:
+        doc = await self.get_playlists(user_id)
+        return doc.get("active", "Liked Songs")
 
     async def migrate_coll(self) -> None:
         logger.info("Migrating users and chats from old collections...")
