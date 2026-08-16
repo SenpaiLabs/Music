@@ -83,6 +83,7 @@ class YouTube:
                     "geo_bypass": True,
                     "nocheckcertificate": True,
                     "extract_flat": True,
+                    "source_address": "0.0.0.0",
                     "logger": YTDLLogger(),
                 }
                 if cookie:
@@ -332,6 +333,7 @@ class YouTube:
                 "no_warnings": True,
                 "overwrites": False,
                 "nocheckcertificate": True,
+                "source_address": "0.0.0.0",
                 "logger": YTDLLogger(),
             }
             if cookie:
