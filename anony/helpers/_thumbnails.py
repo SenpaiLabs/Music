@@ -4,6 +4,7 @@
 
 
 import os
+import re
 import aiohttp
 from PIL import (Image, ImageDraw, ImageEnhance,
                  ImageFilter, ImageFont, ImageOps)
@@ -82,7 +83,8 @@ class Thumbnail:
             
             views = f"Views: {song.view_count}"
             duration = f"Duration: {song.duration}"
-            requested = f"Requested by: {song.user}"
+            clean_user = re.sub(r'<[^>]+>', '', song.user) if song.user else "Unknown"
+            requested = f"Requested by: {clean_user}"
             
             para_text = f"• {views}\n• {duration}\n• {requested}"
             draw.text((title_x, title_y + 180), para_text, font=self.font_para, fill="#7b9aa3", spacing=10)
@@ -104,26 +106,32 @@ class Thumbnail:
             spacing = 110
             radius = 38
             
+            shape_overlay = Image.new("RGBA", size, (0, 0, 0, 0))
+            shape_draw = ImageDraw.Draw(shape_overlay)
+            
             for i in range(4):
                 cx = control_x_start + i * spacing
                 fill_color = "white" if i == 2 else (255, 255, 255, 40)
-                draw.ellipse((cx-radius, control_y-radius, cx+radius, control_y+radius), fill=fill_color)
+                shape_draw.ellipse((cx-radius, control_y-radius, cx+radius, control_y+radius), fill=fill_color)
                 
                 # draw icons
                 icon_color = "white" if i != 2 else "black"
                 if i == 0: # prev
-                    draw.polygon([(cx+8, control_y-12), (cx+8, control_y+12), (cx-8, control_y)], fill=icon_color)
-                    draw.line([(cx-8, control_y-12), (cx-8, control_y+12)], fill=icon_color, width=4)
+                    shape_draw.polygon([(cx+8, control_y-12), (cx+8, control_y+12), (cx-8, control_y)], fill=icon_color)
+                    shape_draw.line([(cx-8, control_y-12), (cx-8, control_y+12)], fill=icon_color, width=4)
                 elif i == 1: # play
-                    draw.polygon([(cx-5, control_y-14), (cx-5, control_y+14), (cx+12, control_y)], fill=icon_color)
+                    shape_draw.polygon([(cx-5, control_y-14), (cx-5, control_y+14), (cx+12, control_y)], fill=icon_color)
                 elif i == 2: # next
-                    draw.polygon([(cx-8, control_y-12), (cx-8, control_y+12), (cx+8, control_y)], fill=icon_color)
-                    draw.line([(cx+8, control_y-12), (cx+8, control_y+12)], fill=icon_color, width=4)
+                    shape_draw.polygon([(cx-8, control_y-12), (cx-8, control_y+12), (cx+8, control_y)], fill=icon_color)
+                    shape_draw.line([(cx+8, control_y-12), (cx+8, control_y+12)], fill=icon_color, width=4)
                 elif i == 3: # music note (dummy)
-                    draw.ellipse((cx-6, control_y+2, cx-2, control_y+8), fill=icon_color)
-                    draw.ellipse((cx+4, control_y, cx+8, control_y+6), fill=icon_color)
-                    draw.line([(cx-4, control_y+5), (cx-4, control_y-8), (cx+6, control_y-10), (cx+6, control_y+3)], fill=icon_color, width=2)
-                    draw.line([(cx-4, control_y-8), (cx+6, control_y-10)], fill=icon_color, width=3)
+                    shape_draw.ellipse((cx-6, control_y+2, cx-2, control_y+8), fill=icon_color)
+                    shape_draw.ellipse((cx+4, control_y, cx+8, control_y+6), fill=icon_color)
+                    shape_draw.line([(cx-4, control_y+5), (cx-4, control_y-8), (cx+6, control_y-10), (cx+6, control_y+3)], fill=icon_color, width=2)
+                    shape_draw.line([(cx-4, control_y-8), (cx+6, control_y-10)], fill=icon_color, width=3)
+
+            image = Image.alpha_composite(image, shape_overlay)
+            draw = ImageDraw.Draw(image)
 
             # 5. Button
             btn_w = 300
@@ -131,7 +139,7 @@ class Thumbnail:
             btn_x = 850
             btn_y = 560
             draw.rounded_rectangle((btn_x, btn_y, btn_x + btn_w, btn_y + btn_h), radius=40, fill=btn_color)
-            draw.text((btn_x + 40, btn_y + 20), "▶ Playing Now", font=self.font_btn, fill=text_color)
+            draw.text((btn_x + 55, btn_y + 20), "Playing Now", font=self.font_btn, fill=text_color)
 
             image = image.convert("RGB")
             image.save(output)
