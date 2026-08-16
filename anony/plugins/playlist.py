@@ -26,9 +26,14 @@ async def _play_playlist(chat_id, m, playlist_name, user_id, songs, video=False)
         "video": video,
     }
     first = songs[0]
-    from anony.plugins.play import play_hndlr
+    from anony.plugins.play import _play_core
+    from anony.helpers._play import ensure_play_permissions
+    
+    if not await ensure_play_permissions(m):
+        return
+        
     url = first.get("url") or first.get("title")
-    await play_hndlr(app, m, video=video, url=url)
+    await _play_core(m, video=video, url=url)
 
 
 async def advance_playlist(chat_id):

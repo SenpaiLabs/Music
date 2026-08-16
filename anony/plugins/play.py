@@ -42,6 +42,15 @@ async def play_hndlr(
     video: bool = False,
     url: str = None,
 ) -> None:
+    return await _play_core(m, force, m3u8, video, url)
+
+async def _play_core(
+    m: types.Message,
+    force: bool = False,
+    m3u8: bool = False,
+    video: bool = False,
+    url: str = None,
+) -> None:
     sent = await m.reply_text(m.lang["play_searching"])
     file = None
     mention = m.from_user.mention
