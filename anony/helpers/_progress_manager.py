@@ -79,32 +79,59 @@ class ProgressManager:
                 await self.rate_limiter.consume(1)
 
                 autoplay = None
+                add_playlist = None
                 if needs_autoplay:
                     _lang = await lang.get_lang(chat_id)
                     status = await db.get_autoplay(chat_id)
-                    autoplay = _lang.get("autoplay_btn", "Autoplay: {}").format(
-                        _lang.get("on", "On") if status else _lang.get("off", "Off")
+                    autoplay = _lang["autoplay_btn"].format(
+                        _lang["on"] if status else _lang["off"]
                     )
+                    add_playlist = _lang["pl_btn"]
 
                 try:
                     from anony import config
+                    markup = buttons.controls(
+                        chat_id=chat_id, autoplay=autoplay,
+                        add_playlist=add_playlist, remove=False
+                    )
                     if config.THUMB_GEN:
-                        await app.edit_message_reply_markup(
-                            chat_id=chat_id,
-                            message_id=media.message_id,
-                            reply_markup=buttons.controls(
-                                chat_id=chat_id, timer=timer, autoplay=autoplay, remove=False
+                        caption_text = None
+                        if timer and media:
+                            source = None
+                            try:
+                                msg = await app.get_messages(chat_id, media.message_id)
+                                source = msg.caption
+                            except Exception:
+                                pass
+                            if source:
+                                import re
+                                clean = re.sub(
+                                    r"\n\n<blockquote>.*?</blockquote>",
+                                    "",
+                                    source.html if hasattr(source, "html") else source,
+                                    flags=re.DOTALL,
+                                )
+                                clean = re.sub(r"\n<i>.*?</i>$", "", clean)
+                                caption_text = f"{clean}\n<i>{timer}</i>"
+                        if caption_text:
+                            await app.edit_message_caption(
+                                chat_id=chat_id,
+                                message_id=media.message_id,
+                                caption=caption_text,
+                                reply_markup=markup,
                             )
-                        )
+                        else:
+                            await app.edit_message_reply_markup(
+                                chat_id=chat_id,
+                                message_id=media.message_id,
+                                reply_markup=markup,
+                            )
                     else:
                         text = _lang["play_media"].format(
                             media.url,
                             media.title,
                             f"{time.strftime('%M:%S', time.gmtime(played))} / {media.duration}",
                             media.user,
-                        )
-                        markup = buttons.controls(
-                            chat_id=chat_id, timer=None, autoplay=autoplay, remove=False
                         )
                         try:
                             await app.edit_message_text(
@@ -156,19 +183,12 @@ class ProgressManager:
         from anony import app
         from anony.helpers import buttons
 
-        played = getattr(media, "time", 0)
-        duration = getattr(media, "duration_sec", 0)
-
-        pos = min(int((played / duration) * 10), 9) if duration > 0 else 0
-        bar = "—" * pos + "◉" + "—" * (9 - pos)
-        timer = bar
-
         try:
             await app.edit_message_reply_markup(
                 chat_id=chat_id,
                 message_id=media.message_id,
                 reply_markup=buttons.controls(
-                    chat_id=chat_id, timer=timer, autoplay=None, remove=True
+                    chat_id=chat_id, remove=True
                 )
             )
         except Exception:
@@ -203,17 +223,12 @@ class ProgressManager:
                         next_track.file_path = "downloading"
 
                 if remaining < 10:
-                    continue # handled by remove=True in main update loop or stop
+                    continue
 
-                from anony import config
-                if config.THUMB_GEN:
-                    pos = min(int((played / duration) * 10), 9)
-                    bar = "—" * pos + "◉" + "—" * (9 - pos)
-                    timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
-                    needs_autoplay = False
-                else:
-                    timer = None
-                    needs_autoplay = True
+                pos = min(int((played / duration) * 10), 9)
+                bar = "—" * pos + "◉" + "—" * (9 - pos)
+                timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
+                needs_autoplay = True
 
                 self.pending_edits[chat_id] = remaining
                 await self.queue.put((chat_id, remaining, timer, needs_autoplay, played))

@@ -281,6 +281,20 @@ class TgCall(PyTgCalls):
                         queue.add(chat_id, media)
 
             if not media:
+                from anony.plugins.playlist import advance_playlist
+                media = await advance_playlist(chat_id)
+                if media:
+                    queue.add(chat_id, media)
+                    if not media.file_path:
+                        media.file_path = await yt.download(
+                            media.id,
+                            video=media.video,
+                            title=getattr(media, "title", ""),
+                            duration=getattr(media, "duration", ""),
+                            duration_sec=getattr(media, "duration_sec", 0),
+                        )
+
+            if not media:
                 return await self.stop(chat_id)
 
         _lang = await lang.get_lang(chat_id)

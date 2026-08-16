@@ -55,7 +55,34 @@ async def _controls(_, query: types.CallbackQuery):
             query.lang["autoplay_on"] if status else query.lang["autoplay_off"]
         )
         return await query.edit_message_reply_markup(
-            reply_markup=buttons.controls(chat_id, autoplay=autoplay_text)
+            reply_markup=buttons.controls(
+                chat_id,
+                autoplay=autoplay_text,
+                add_playlist=query.lang["pl_btn"],
+            )
+        )
+
+    if action == "addplaylist":
+        user_id = query.from_user.id
+        media = queue.get_current(chat_id)
+        if not media:
+            return await query.answer(query.lang["not_playing"], show_alert=True)
+        active = await db.get_active_playlist(user_id)
+        track_dict = {
+            "id": media.id,
+            "title": media.title or "",
+            "url": media.url or "",
+            "duration": media.duration or "00:00",
+        }
+        added = await db.add_song_to_playlist(user_id, active, track_dict)
+        if added:
+            return await query.answer(
+                query.lang["pl_song_added"].format(active),
+                show_alert=True,
+            )
+        return await query.answer(
+            query.lang["pl_already_in"].format(active),
+            show_alert=True,
         )
 
     await query.answer(query.lang["processing"], show_alert=True)
@@ -164,6 +191,108 @@ async def _help(_, query: types.CallbackQuery):
         text=query.lang[f"help_{data[1]}"],
         reply_markup=buttons.help_markup(query.lang, True),
     )
+
+
+_playlist_owners: dict[int, int] = {}
+
+
+@app.on_callback_query(filters.regex("playlist") & ~app.bl_users)
+@lang.language()
+async def _playlist_cb(_, query: types.CallbackQuery):
+    data = query.data.split(maxsplit=2)
+    action = data[1] if len(data) > 1 else ""
+
+    if action in ("soon1", "soon2"):
+        return await query.answer(
+            query.lang["coming_soon"], show_alert=True
+        )
+
+    if action == "menu":
+        msg = await query.edit_message_text(
+            text=query.lang["pl_menu_title"],
+            reply_markup=buttons.playlist_markup_1(query.lang, query.from_user.id),
+        )
+        _playlist_owners[msg.id] = query.from_user.id
+        return
+
+    owner_id = int(data[2].split()[0]) if len(data) > 2 else 0
+    if owner_id and query.from_user.id != owner_id:
+        return await query.answer(
+            query.lang["pl_not_your_menu"],
+            show_alert=True,
+        )
+
+    if action == "close":
+        _playlist_owners.pop(query.message.id, None)
+        await query.answer()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+        return
+
+    if action == "back":
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["pl_menu_title"],
+            reply_markup=buttons.playlist_markup_1(query.lang, owner_id),
+        )
+
+    if action == "howto":
+        await query.answer()
+        return await query.edit_message_text(
+            text=query.lang["pl_howto"],
+            reply_markup=buttons.playlist_markup_1(query.lang, owner_id),
+        )
+
+    if action == "list":
+        await query.answer()
+        doc = await db.get_playlists(owner_id)
+        playlists = list(doc["playlists"].keys())
+        active = doc.get("active", "Liked Songs")
+        custom_count = len([p for p in playlists if p != "Liked Songs"])
+        return await query.edit_message_text(
+            text=query.lang["pl_select_title"],
+            reply_markup=buttons.playlist_markup_2(
+                query.lang, owner_id, playlists, active, custom_count < 5
+            ),
+        )
+
+    if action == "select":
+        parts = query.data.split(maxsplit=3)
+        name = parts[3] if len(parts) > 3 else "Liked Songs"
+        await db.set_active_playlist(owner_id, name)
+        await query.answer(
+            query.lang["pl_selected"].format(name)
+        )
+        doc = await db.get_playlists(owner_id)
+        playlists = list(doc["playlists"].keys())
+        custom_count = len([p for p in playlists if p != "Liked Songs"])
+        return await query.edit_message_reply_markup(
+            reply_markup=buttons.playlist_markup_2(
+                query.lang, owner_id, playlists, name, custom_count < 5
+            ),
+        )
+
+    if action == "create":
+        from anony.plugins.playlist import _waiting_name
+        import asyncio
+        import time
+        
+        now = time.time()
+        _waiting_name[owner_id] = (query.message.chat.id, now)
+        
+        async def clear_state():
+            await asyncio.sleep(60)
+            if _waiting_name.get(owner_id) and _waiting_name[owner_id][1] == now:
+                _waiting_name.pop(owner_id, None)
+                
+        asyncio.create_task(clear_state())
+        
+        return await query.answer(
+            query.lang["pl_enter_name"],
+            show_alert=True,
+        )
 
 
 @app.on_callback_query(filters.regex("leaderboard") & ~app.bl_users)

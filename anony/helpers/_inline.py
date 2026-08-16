@@ -21,8 +21,8 @@ class Inline:
         self,
         chat_id: int,
         status: str = None,
-        timer: str = None,
         autoplay: str = None,
+        add_playlist: str = None,
         remove: bool = False,
     ) -> types.InlineKeyboardMarkup:
         keyboard = []
@@ -31,14 +31,13 @@ class Inline:
                 [self.ikb(text=status, callback_data=f"controls status {chat_id}", style=enums.ButtonStyle.DANGER)]
             )
         else:
-            if timer:
-                keyboard.append(
-                    [self.ikb(text=timer, callback_data=f"controls status {chat_id}")]
-                )
+            row = []
             if autoplay:
-                keyboard.append(
-                    [self.ikb(text=autoplay, callback_data=f"controls autoplay {chat_id}")]
-                )
+                row.append(self.ikb(text=autoplay, callback_data=f"controls autoplay {chat_id}"))
+            if add_playlist:
+                row.append(self.ikb(text=add_playlist, callback_data=f"controls addplaylist {chat_id}"))
+            if row:
+                keyboard.append(row)
 
         if not remove:
             keyboard.append(
@@ -69,7 +68,97 @@ class Inline:
                 for i, cb in enumerate(cbs)
             ]
             rows = [buttons[i : i + 3] for i in range(0, len(buttons), 3)]
+            rows.append(
+                [
+                    self.ikb(text=_lang["help_9"], callback_data="playlist menu"),
+                    self.ikb(text=_lang["coming_soon"], callback_data="playlist soon1"),
+                    self.ikb(text=_lang["coming_soon"], callback_data="playlist soon2"),
+                ]
+            )
 
+        return self.ikm(rows)
+
+    def playlist_markup_1(
+        self, _lang: dict, user_id: int
+    ) -> types.InlineKeyboardMarkup:
+        return self.ikm(
+            [
+                [
+                    self.ikb(
+                        text=_lang["pl_howto_btn"],
+                        callback_data=f"playlist howto {user_id}",
+                    ),
+                    self.ikb(
+                        text=_lang["pl_playlist_btn"],
+                        callback_data=f"playlist list {user_id}",
+                    ),
+                ],
+                [
+                    self.ikb(
+                        text=_lang["close"],
+                        callback_data=f"playlist close {user_id}",
+                        style=enums.ButtonStyle.DANGER,
+                    ),
+                ],
+            ]
+        )
+
+    def playlist_markup_2(
+        self, _lang: dict, user_id: int, playlists: list,
+        active: str, can_create: bool,
+    ) -> types.InlineKeyboardMarkup:
+        rows = []
+        row = []
+        default_name = _lang["pl_default_name"]
+        label = f"{'✔ ' if active == 'Liked Songs' else ''}{default_name}"
+        row.append(
+            self.ikb(
+                text=label,
+                callback_data=f"playlist select {user_id} Liked Songs",
+                style=enums.ButtonStyle.PRIMARY if active == "Liked Songs" else enums.ButtonStyle.DEFAULT,
+            )
+        )
+        for name in playlists:
+            if name == "Liked Songs":
+                continue
+            prefix = "✔ " if active == name else ""
+            row.append(
+                self.ikb(
+                    text=f"{prefix}{name}",
+                    callback_data=f"playlist select {user_id} {name}",
+                    style=enums.ButtonStyle.PRIMARY if active == name else enums.ButtonStyle.DEFAULT,
+                )
+            )
+            if len(row) == 3:
+                rows.append(row)
+                row = []
+        if row:
+            rows.append(row)
+
+        if can_create:
+            rows.append(
+                [
+                    self.ikb(
+                        text=_lang["pl_create_btn"],
+                        callback_data=f"playlist create {user_id}",
+                    )
+                ]
+            )
+
+        rows.append(
+            [
+                self.ikb(
+                    text=_lang["back"],
+                    callback_data=f"playlist back {user_id}",
+                    style=enums.ButtonStyle.PRIMARY,
+                ),
+                self.ikb(
+                    text=_lang["close"],
+                    callback_data=f"playlist close {user_id}",
+                    style=enums.ButtonStyle.DANGER,
+                ),
+            ]
+        )
         return self.ikm(rows)
 
     def leaderboard_markup(self, _lang: dict, chat_id: int) -> types.InlineKeyboardMarkup:
