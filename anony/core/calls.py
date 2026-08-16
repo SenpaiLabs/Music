@@ -150,8 +150,7 @@ class TgCall(PyTgCalls):
                         logger.warning(f"FloodWait on Now Playing message: sleeping {fw.value}s (chat {chat_id})")
                         await asyncio.sleep(fw.value)
 
-                if not config.THUMB_GEN:
-                    progress_manager.register(chat_id)
+                progress_manager.register(chat_id)
 
         except FileNotFoundError:
             await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))

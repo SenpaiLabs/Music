@@ -46,17 +46,23 @@ class Thumbnail:
 
             await self.save_thumb(temp, song.thumbnail)
             
-            # Background
-            image = Image.new("RGBA", size, color="#123d4d")
-            draw = ImageDraw.Draw(image)
-
-            # 1. Album art
+            # 1. Album art & Background
             album_size = (450, 450)
             try:
-                album = Image.open(temp).convert("RGBA")
-                album = ImageOps.fit(album, album_size, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+                base_image = Image.open(temp).convert("RGBA")
             except Exception:
-                album = Image.new("RGBA", album_size, color="#444444")
+                base_image = Image.new("RGBA", size, color="#123d4d")
+                
+            # Create a glassy, dynamic background
+            background = base_image.resize(size, Image.Resampling.LANCZOS)
+            background = background.filter(ImageFilter.GaussianBlur(40))
+            # Dark overlay for better text readability
+            overlay = Image.new("RGBA", size, (0, 0, 0, 160)) 
+            image = Image.alpha_composite(background, overlay)
+            draw = ImageDraw.Draw(image)
+
+            # Process album for the foreground
+            album = ImageOps.fit(base_image, album_size, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
                 
             # Draw rounded corners for album
             mask = Image.new("L", album_size, 0)
@@ -81,13 +87,16 @@ class Thumbnail:
             para_text = f"• {views}\n• {duration}\n• {requested}"
             draw.text((title_x, title_y + 180), para_text, font=self.font_para, fill="#7b9aa3", spacing=10)
 
-            # 3. Green checkmark
-            check_center = (1120, 160)
-            check_radius = 28
-            draw.ellipse((check_center[0]-check_radius, check_center[1]-check_radius, 
-                          check_center[0]+check_radius, check_center[1]+check_radius), fill="#2dd460")
-            # Draw tick
-            draw.line([(1105, 160), (1115, 172), (1135, 148)], fill="white", width=7, joint="curve")
+
+            # Get dominant color
+            dom_color = base_image.resize((1, 1)).getpixel((0, 0))
+            if len(dom_color) == 4:
+                dom_color = dom_color[:3]
+            
+            # Boost dominant color brightness for button
+            r, g, b = dom_color
+            btn_color = (min(r + 40, 255), min(g + 40, 255), min(b + 40, 255))
+            text_color = "white" if (r*0.299 + g*0.587 + b*0.114) < 150 else "black"
 
             # 4. Controls
             control_y = 600
@@ -97,31 +106,32 @@ class Thumbnail:
             
             for i in range(4):
                 cx = control_x_start + i * spacing
-                fill_color = "#e0e0e0" if i == 2 else "#2a5969"
+                fill_color = "white" if i == 2 else (255, 255, 255, 40)
                 draw.ellipse((cx-radius, control_y-radius, cx+radius, control_y+radius), fill=fill_color)
                 
                 # draw icons
+                icon_color = "white" if i != 2 else "black"
                 if i == 0: # prev
-                    draw.polygon([(cx+8, control_y-12), (cx+8, control_y+12), (cx-8, control_y)], fill="#8bbcc9")
-                    draw.line([(cx-8, control_y-12), (cx-8, control_y+12)], fill="#8bbcc9", width=4)
+                    draw.polygon([(cx+8, control_y-12), (cx+8, control_y+12), (cx-8, control_y)], fill=icon_color)
+                    draw.line([(cx-8, control_y-12), (cx-8, control_y+12)], fill=icon_color, width=4)
                 elif i == 1: # play
-                    draw.polygon([(cx-5, control_y-14), (cx-5, control_y+14), (cx+12, control_y)], fill="#8bbcc9")
+                    draw.polygon([(cx-5, control_y-14), (cx-5, control_y+14), (cx+12, control_y)], fill=icon_color)
                 elif i == 2: # next
-                    draw.polygon([(cx-8, control_y-12), (cx-8, control_y+12), (cx+8, control_y)], fill="#4a4a4a")
-                    draw.line([(cx+8, control_y-12), (cx+8, control_y+12)], fill="#4a4a4a", width=4)
+                    draw.polygon([(cx-8, control_y-12), (cx-8, control_y+12), (cx+8, control_y)], fill=icon_color)
+                    draw.line([(cx+8, control_y-12), (cx+8, control_y+12)], fill=icon_color, width=4)
                 elif i == 3: # music note (dummy)
-                    draw.ellipse((cx-6, control_y+2, cx-2, control_y+8), fill="#8bbcc9")
-                    draw.ellipse((cx+4, control_y, cx+8, control_y+6), fill="#8bbcc9")
-                    draw.line([(cx-4, control_y+5), (cx-4, control_y-8), (cx+6, control_y-10), (cx+6, control_y+3)], fill="#8bbcc9", width=2)
-                    draw.line([(cx-4, control_y-8), (cx+6, control_y-10)], fill="#8bbcc9", width=3)
+                    draw.ellipse((cx-6, control_y+2, cx-2, control_y+8), fill=icon_color)
+                    draw.ellipse((cx+4, control_y, cx+8, control_y+6), fill=icon_color)
+                    draw.line([(cx-4, control_y+5), (cx-4, control_y-8), (cx+6, control_y-10), (cx+6, control_y+3)], fill=icon_color, width=2)
+                    draw.line([(cx-4, control_y-8), (cx+6, control_y-10)], fill=icon_color, width=3)
 
             # 5. Button
             btn_w = 300
             btn_h = 80
             btn_x = 850
             btn_y = 560
-            draw.rounded_rectangle((btn_x, btn_y, btn_x + btn_w, btn_y + btn_h), radius=40, fill="#04f4d2")
-            draw.text((btn_x + 35, btn_y + 20), "+ Creativestyle", font=self.font_btn, fill="#104a52")
+            draw.rounded_rectangle((btn_x, btn_y, btn_x + btn_w, btn_y + btn_h), radius=40, fill=btn_color)
+            draw.text((btn_x + 40, btn_y + 20), "▶ Playing Now", font=self.font_btn, fill=text_color)
 
             image = image.convert("RGB")
             image.save(output)
