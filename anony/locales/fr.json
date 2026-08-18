@@ -193,5 +193,21 @@
     "purge_calc": "Calcul...",
     "purge_all_users": "Tous les utilisateurs",
     "purge_error": "Erreur : {0}",
-    "bhelp_text": "**🛡 Mass Moderation Commands Help 🛡**\n\nThese commands allow you to quickly manage large numbers of users in a group.\n\n**Basic Commands:**\n• `/banall` - Bans all non-admin members in a group.\n• `/kickall` - Kicks all non-admin members in a group.\n• `/unbanall` - Unbans all banned users in a group.\n\n**Advanced Filters (Optional):**\nYou can target specific types of users by adding a filter.\n• `/banall bots` - Targets ONLY bots.\n• `/banall deleted` - Targets ONLY deleted accounts.\n*(Filters work with kickall and unbanall too)*\n\n**Remote Execution:**\nYou can run these commands from the Bot's DM or another group by adding a Chat ID or Username!\n• `/banall -1001234567890`\n• `/banall @MyTargetGroup -test bots`\n\n**Dry-Run Mode (Test):**\nWant to see who will be affected without actually banning them? Use `-test`.\n• `/banall -test`\n• `/banall -test bots`\n\n**Rules:**\n- These commands must be sent directly in the group you want to manage.\n- The Bot must have the `Ban Users` privilege.\n- These commands are strictly limited to Sudo Users and the Bot Owner."
+    "bhelp_text": "<b>🛡 Mass Moderation Commands Help 🛡</b>\n\nThese commands allow you to quickly manage large numbers of users in a group.\n\n<b>Basic Commands:</b>\n• `/banall` - Bans all non-admin members in a group.\n• `/kickall` - Kicks all non-admin members in a group.\n• `/unbanall` - Unbans all banned users in a group.\n\n<b>Advanced Filters (Optional):</b>\nYou can target specific types of users by adding a filter.\n• `/banall bots` - Targets ONLY bots.\n• `/banall deleted` - Targets ONLY deleted accounts.\n*(Filters work with kickall and unbanall too)*\n\n<b>Remote Execution:</b>\nYou can run these commands from the Bot's DM or another group by adding a Chat ID or Username!\n• `/banall -1001234567890`\n• `/banall @MyTargetGroup -test bots`\n\n<b>Dry-Run Mode (Test):</b>\nWant to see who will be affected without actually banning them? Use `-test`.\n• `/banall -test`\n• `/banall -test bots`\n\n<b>Rules:</b>\n- These commands must be sent directly in the group you want to manage.\n- The Bot must have the `Ban Users` privilege.\n- These commands are strictly limited to Sudo Users and the Bot Owner.",
+    "tgm_reply_media": "Veuillez répondre à un fichier multimédia pour le télécharger.",
+    "tgm_tele_unsupported": "Telegraph ne prend en charge que les photos et les vidéos mp4/gifs.",
+    "tgm_tele_size": "La taille du fichier doit être inférieure à 5 Mo pour Telegraph.",
+    "tgm_imgbb_unsupported": "ImgBB ne prend en charge que les photos/images.",
+    "tgm_catbox_size": "Le fichier est trop volumineux. La limite est de 200 Mo.",
+    "tgm_downloading": "Téléchargement en cours...",
+    "tgm_download_fail": "Échec du téléchargement du média.",
+    "tgm_uploading": "Envoi vers {0}...",
+    "tgm_success": "<b>Téléchargé avec succès !</b>\n\n<b>Lien :</b> {0}",
+    "tgm_tele_err": "<b>Erreur de Telegraph :</b> {0}",
+    "tgm_tele_fail": "Échec de l'envoi vers Telegraph.",
+    "tgm_catbox_err": "<b>Erreur de Catbox :</b> {0}",
+    "tgm_imgbb_err": "<b>Erreur d'ImgBB :</b> {0}",
+    "tgm_err": "<b>Erreur :</b> {0}",
+    "help_9": "TGM Uploader",
+    "help_tgm": "<b>TGM Uploader Commands:</b>\n\n/tgm - Upload media (up to 5MB) to Telegraph\n/catbox - Upload media (up to 200MB) to Catbox.moe\n/imgbb - Upload photos to ImgBB\n\nReply to any photo or video with these commands."
 }
