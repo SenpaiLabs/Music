@@ -77,7 +77,7 @@ class YouTube:
             def _extract():
                 cookie = self.get_cookies()
                 opts = {
-                    "format": "bestaudio",
+                    "format": "best",
                     "quiet": True,
                     "noplaylist": True,
                     "geo_bypass": True,
@@ -85,6 +85,7 @@ class YouTube:
                     "extract_flat": True,
                     "source_address": "0.0.0.0",
                     "logger": YTDLLogger(),
+                    "extractor_args": {"youtube": ["player_client=android,ios"]},
                 }
                 if cookie:
                     opts["cookiefile"] = cookie
@@ -163,7 +164,7 @@ class YouTube:
             api_key = match.group(1)
 
             version_match = re.search(r'"INNERTUBE_CONTEXT_CLIENT_VERSION":"(.*?)"', text)
-            client_version = version_match.group(1) if version_match else "2.20230301.09.00"
+            client_version = version_match.group(1) if version_match else "2.20240101.01.00"
 
             payload = {
                 "context": {
@@ -339,6 +340,7 @@ class YouTube:
                 "nocheckcertificate": True,
                 "source_address": "0.0.0.0",
                 "logger": YTDLLogger(),
+                "extractor_args": {"youtube": ["player_client=android,ios"]},
             }
             if cookie:
                 base_opts["cookiefile"] = cookie
@@ -346,13 +348,13 @@ class YouTube:
             if video:
                 ydl_opts = {
                     **base_opts,
-                    "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                    "format": "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
                     "merge_output_format": "mp4",
                 }
             else:
                 ydl_opts = {
                     **base_opts,
-                    "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
+                    "format": "bestaudio/best",
                 }
 
             def _download():
