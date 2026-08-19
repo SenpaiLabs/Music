@@ -77,7 +77,7 @@ class YouTube:
             def _extract():
                 cookie = self.get_cookies()
                 opts = {
-                    "format": "bestaudio",
+                    "format": "best",
                     "quiet": True,
                     "noplaylist": True,
                     "geo_bypass": True,
@@ -163,7 +163,7 @@ class YouTube:
             api_key = match.group(1)
 
             version_match = re.search(r'"INNERTUBE_CONTEXT_CLIENT_VERSION":"(.*?)"', text)
-            client_version = version_match.group(1) if version_match else "2.20230301.09.00"
+            client_version = version_match.group(1) if version_match else "2.20240101.01.00"
 
             payload = {
                 "context": {
@@ -346,13 +346,13 @@ class YouTube:
             if video:
                 ydl_opts = {
                     **base_opts,
-                    "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                    "format": "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
                     "merge_output_format": "mp4",
                 }
             else:
                 ydl_opts = {
                     **base_opts,
-                    "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
+                    "format": "bestaudio/best",
                 }
 
             def _download():
