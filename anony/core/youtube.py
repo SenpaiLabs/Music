@@ -83,7 +83,7 @@ class YouTube:
                     "geo_bypass": True,
                     "nocheckcertificate": True,
                     "extract_flat": True,
-                    "source_address": "0.0.0.0",
+                    "force_ipv4": True,
                     "logger": YTDLLogger(),
                 }
                 if cookie:
@@ -337,7 +337,7 @@ class YouTube:
                 "no_warnings": True,
                 "overwrites": True,
                 "nocheckcertificate": True,
-                "source_address": "0.0.0.0",
+                "force_ipv4": True,
                 "logger": YTDLLogger(),
             }
             if cookie:
@@ -401,4 +401,3 @@ class YouTube:
                 asyncio.create_task(_upload_to_cache())
 
             return result_filename
-
