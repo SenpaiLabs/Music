@@ -31,7 +31,6 @@ async def _activevc(_, m: types.Message):
 
     with open("activevc.txt", "w") as f:
         f.write(text)
-    f.close()
     await sent.edit_media(
         media=types.InputMediaDocument(
             media="activevc.txt",
