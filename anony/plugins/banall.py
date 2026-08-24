@@ -27,7 +27,6 @@ async def _clean_msg(message: Message, delay: int = 60):
 
 
 async def _worker(
-    worker_id: int,
     queue: asyncio.Queue,
     chat_id: int,
     op: str,
@@ -150,8 +149,8 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
         circuit_breaker.set()
 
         workers = [
-            asyncio.create_task(_worker(i, queue, target_chat_id, op, circuit_breaker, stats))
-            for i in range(20)
+            asyncio.create_task(_worker(queue, target_chat_id, op, circuit_breaker, stats))
+            for _ in range(20)
         ]
 
         last_update = time.time()

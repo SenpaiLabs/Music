@@ -15,8 +15,6 @@ from anony.helpers import Track
 
 class Thumbnail:
     def __init__(self):
-        self.fill = (255, 255, 255)
-        
         font_path_bold = "anony/helpers/Raleway-Bold.ttf"
         font_path_light = "anony/helpers/Inter-Light.ttf"
         

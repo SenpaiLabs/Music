@@ -203,24 +203,6 @@ class MongoDB:
             {"$inc": {f"{key}.play_count": 1}}
         )
 
-    async def get_top_songs(self, limit: int = 10) -> list:
-        pipeline = [
-            {
-                "$addFields": {
-                    "total_plays": {
-                        "$add": [
-                            {"$ifNull": ["$audio.play_count", 0]},
-                            {"$ifNull": ["$video.play_count", 0]}
-                        ]
-                    }
-                }
-            },
-            {"$sort": {"total_plays": -1}},
-            {"$limit": limit}
-        ]
-        cursor = await self.song_cache.aggregate(pipeline)
-        return [doc async for doc in cursor]
-
     # CACHE
     async def get_call(self, chat_id: int) -> bool:
         return chat_id in self.active_calls

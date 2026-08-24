@@ -22,7 +22,7 @@ from anony import (app, config, db, lang, logger,
 from anony.helpers import Media, Track, buttons, utils, progress_manager
 
 
-class TgCall(PyTgCalls):
+class TgCall:
     def __init__(self):
         self.clients = []
 
