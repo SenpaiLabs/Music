@@ -408,7 +408,9 @@ class YouTube:
                         except Exception as e:
                             logger.warning(f"Background cache upload failed for {video_id}: {e}")
 
-                    asyncio.create_task(_upload_to_cache())
+                    bg_task = asyncio.create_task(_upload_to_cache())
+                    from anony import tasks
+                    tasks.append(bg_task)
 
                 return result_filename
             finally:
