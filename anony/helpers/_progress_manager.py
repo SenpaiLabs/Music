@@ -222,4 +222,20 @@ class ProgressManager:
         except Exception:
             pass
 
+    async def stop_workers(self):
+        """Gracefully stop all workers and flush pending edits"""
+        self.is_running = False
+
+        # Cancel all active chat loops
+        for chat_id in list(self.active_chats):
+            self.deregister(chat_id)
+
+        # Cancel all workers
+        for worker in self.workers:
+            worker.cancel()
+
+        if self.workers:
+            await asyncio.gather(*self.workers, return_exceptions=True)
+        self.workers.clear()
+
 progress_manager = ProgressManager()

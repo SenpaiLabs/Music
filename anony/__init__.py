@@ -61,6 +61,8 @@ thumb = Thumbnail()
 from anony.core.calls import TgCall
 anon = TgCall()
 
+from anony.helpers import progress_manager
+
 
 async def _graceful(coro, name: str, timeout: float = 5) -> None:
     task = asyncio.ensure_future(coro)
@@ -85,6 +87,7 @@ async def stop() -> None:
         except Exception:
             continue
 
+    await _graceful(progress_manager.stop_workers(), "progress_manager.stop")
     await _graceful(app.exit(), "app.exit")
     await _graceful(userbot.exit(), "userbot.exit")
     await _graceful(db.close(), "db.close")
