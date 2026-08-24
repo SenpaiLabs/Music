@@ -1,7 +1,7 @@
 .env
 .cache
-*.txt
 .idea
+log.txt
 .DS_Store
 .venv/
 venv/

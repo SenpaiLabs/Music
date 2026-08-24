@@ -6,7 +6,8 @@
 import asyncio
 
 from ntgcalls import (ConnectionNotFound, TelegramServerError,
-                      RTMPStreamingUnsupported, ConnectionError)
+                      RTMPStreamingUnsupported, ConnectionError,
+                      TransportParseException)
 from pyrogram import errors
 from pyrogram.errors import (ChatSendMediaForbidden, ChatSendPhotosForbidden,
                              MessageIdInvalid)
@@ -28,12 +29,18 @@ class TgCall(PyTgCalls):
     async def pause(self, chat_id: int) -> bool:
         client = await db.get_assistant(chat_id)
         await db.playing(chat_id, paused=True)
-        return await client.pause(chat_id)
+        try:
+            return await client.pause(chat_id)
+        except (ConnectionNotFound, exceptions.NotInCallError):
+            await self.stop(chat_id)
 
     async def resume(self, chat_id: int) -> bool:
         client = await db.get_assistant(chat_id)
         await db.playing(chat_id, paused=False)
-        return await client.resume(chat_id)
+        try:
+            return await client.resume(chat_id)
+        except (ConnectionNotFound, exceptions.NotInCallError):
+            await self.stop(chat_id)
 
     async def stop(self, chat_id: int) -> None:
         progress_manager.deregister(chat_id)
@@ -174,7 +181,8 @@ class TgCall(PyTgCalls):
                 logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
                 return await self.stop(chat_id)
             await self.play_next(chat_id, attempt=attempt + 1)
-        except (ConnectionError, ConnectionNotFound, TelegramServerError):
+        except (ConnectionError, ConnectionNotFound, TelegramServerError,
+                TransportParseException, TimeoutError):
             await self.stop(chat_id)
             await message.edit_text(_lang["error_tg_server"])
         except RTMPStreamingUnsupported:

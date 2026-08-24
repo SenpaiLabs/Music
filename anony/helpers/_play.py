@@ -71,13 +71,9 @@ def checkUB(play):
                         )
             except errors.ChatAdminRequired:
                 return await m.reply_text(m.lang["admin_required"])
-            except (errors.UserNotParticipant, errors.exceptions.bad_request_400.UserNotParticipant):
+            except errors.UserNotParticipant:
                 if m.chat.username:
                     invite_link = m.chat.username
-                    try:
-                        await client.resolve_peer(invite_link)
-                    except Exception:
-                        pass
                 else:
                     try:
                         invite_link = (await app.get_chat(chat_id)).invite_link
@@ -123,10 +119,6 @@ def checkUB(play):
                     )
 
                 await umm.delete()
-                try:
-                    await client.resolve_peer(chat_id)
-                except Exception:
-                    pass
 
         if await db.get_cmd_delete(chat_id):
             try:
