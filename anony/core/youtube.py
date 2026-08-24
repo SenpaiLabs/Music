@@ -345,6 +345,10 @@ class YouTube:
                     "nocheckcertificate": True,
                     "force_ipv4": True,
                     "remote_components": ["ejs:github"],
+                    "retries": 5,
+                    "fragment_retries": 5,
+                    "socket_timeout": 30,
+                    "extractor_args": {"youtube": ["client=android", "player_client=android", "player_skip=webpage"]},
                 }
                 if cookie:
                     base_opts["cookiefile"] = cookie
