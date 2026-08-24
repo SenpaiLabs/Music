@@ -71,35 +71,38 @@ async def _vc_watcher_event(client, update, users, chats):
         return
     if isinstance(update, UpdateGroupCallParticipants):
         for chat_id, chat in chats.items():
-            if not await db.playing(chat_id):
+            try:
+                if not await db.playing(chat_id):
+                    continue
+
+                media = queue.get_current(chat_id)
+                if not media or getattr(media, "time", 0) < 30:
+                    continue
+
+                # Triggered when participants change. Check if empty.
+                is_empty = await anon.is_vc_empty(chat_id)
+                if is_empty:
+                    _lang = await lang.get_lang(chat_id)
+                    try:
+                        await app.edit_message_reply_markup(
+                            chat_id=chat_id,
+                            message_id=media.message_id,
+                            reply_markup=buttons.controls(
+                                chat_id=chat_id, status=_lang["stopped"], remove=True
+                            ),
+                        )
+                    except errors.MessageIdInvalid:
+                        pass
+                    except Exception:
+                        pass
+
+                    await anon.stop(chat_id)
+                    try:
+                        await app.send_message(chat_id=chat_id, text=_lang["auto_left"])
+                    except Exception:
+                        pass
+            except Exception:
                 continue
-
-            media = queue.get_current(chat_id)
-            if not media or getattr(media, "time", 0) < 30:
-                continue
-
-            # Triggered when participants change. Check if empty.
-            is_empty = await anon.is_vc_empty(chat_id)
-            if is_empty:
-                _lang = await lang.get_lang(chat_id)
-                try:
-                    await app.edit_message_reply_markup(
-                        chat_id=chat_id,
-                        message_id=media.message_id,
-                        reply_markup=buttons.controls(
-                            chat_id=chat_id, status=_lang["stopped"], remove=True
-                        ),
-                    )
-                except errors.MessageIdInvalid:
-                    pass
-                except Exception:
-                    pass
-
-                await anon.stop(chat_id)
-                try:
-                    await app.send_message(chat_id=chat_id, text=_lang["auto_left"])
-                except Exception:
-                    pass
 
 
 if config.AUTO_LEAVE:
