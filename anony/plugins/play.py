@@ -86,7 +86,7 @@ async def play_hndlr(
         )
 
     if await db.is_logger():
-        await utils.play_log(m, sent.link, file.title, file.duration)
+        await utils.play_log(m.chat.id, m.chat.title, m.from_user.id, m.from_user.mention, sent.link, file.title, file.duration, m.lang)
 
     file.user = mention
     if force:

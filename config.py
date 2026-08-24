@@ -1,4 +1,3 @@
-import os
 from os import getenv
 from dotenv import load_dotenv
 
@@ -10,7 +9,7 @@ class Config:
         self.API_HASH = getenv("API_HASH", "")
 
         self.BOT_TOKEN = getenv("BOT_TOKEN", "")
-        self.IMGBB_API_KEY = os.getenv("IMGBB_API_KEY", "")
+        self.IMGBB_API_KEY = getenv("IMGBB_API_KEY", "")
         self.MONGO_URL = getenv("MONGO_URL", "")
         self.SONG_CACHE_MONGO_URI = getenv("SONG_CACHE_MONGO_URI", "")
 

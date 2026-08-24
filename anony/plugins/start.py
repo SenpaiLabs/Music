@@ -76,10 +76,8 @@ async def _new_member(_, message: types.Message):
     if message.chat.type != enums.ChatType.SUPERGROUP:
         return await message.chat.leave()
 
-    await asyncio.sleep(3)
-    for member in message.new_chat_members:
-        if member.id == app.id:
-            if await db.is_chat(message.chat.id):
-                return
+    if any(m.id == app.id for m in message.new_chat_members):
+        await asyncio.sleep(3)
+        if not await db.is_chat(message.chat.id):
             await utils.send_log(message, True)
             await db.add_chat(message.chat.id)

@@ -7,10 +7,8 @@ import io
 import os
 import re
 import sys
-import uuid
 import traceback
 from html import escape
-from typing import Any, Optional, Tuple
 
 from pyrogram import filters, types
 
@@ -28,11 +26,11 @@ async def eval_handler(_, message: types.Message):
     code = message.text.split(None, 1)[1]
     out_buf = io.StringIO()
 
-    async def _eval_code() -> Tuple[str, Optional[str]]:
-        async def send(*args: Any, **kwargs: Any) -> types.Message:
+    async def _eval_code():
+        async def send(*args, **kwargs) -> types.Message:
             return await message.reply_text(*args, **kwargs)
 
-        def _print(*args: Any, **kwargs: Any) -> None:
+        def _print(*args, **kwargs) -> None:
             kwargs.setdefault("file", out_buf)
             print(*args, **kwargs)
 
@@ -80,7 +78,7 @@ async def eval_handler(_, message: types.Message):
 
     if len(response) > 4096:
         with io.BytesIO(output.encode()) as out_file:
-            out_file.name = f"{uuid.uuid4().hex[:8].lower()}.txt"
+            out_file.name = f"{os.urandom(4).hex()}.txt"
             return await message.reply_document(
                 document=out_file, disable_notification=True
             )

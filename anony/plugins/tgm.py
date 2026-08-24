@@ -12,16 +12,10 @@ async def tgm_upload(_, message: types.Message):
         return await message.reply_text(message.lang["tgm_reply_media"])
 
     msg = await message.reply_text(message.lang["tgm_downloading"])
-    
+
     local_path = await reply.download()
     if not local_path:
         return await msg.edit_text(message.lang["tgm_download_fail"])
-
-    new_path = os.path.join(os.path.dirname(local_path), "abc.jpg")
-    if os.path.exists(new_path):
-        os.remove(new_path)
-    os.rename(local_path, new_path)
-    local_path = new_path
 
     await msg.edit_text(message.lang["tgm_uploading"].format("TGM"))
     try:

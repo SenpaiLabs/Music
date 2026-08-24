@@ -65,17 +65,11 @@ from anony.helpers import progress_manager
 
 
 async def _graceful(coro, name: str, timeout: float = 5) -> None:
-    task = asyncio.ensure_future(coro)
     try:
-        await asyncio.wait([task], timeout=timeout)
-    except Exception:
-        return
-
-    if not task.done():
-        return
-
-    exc = task.exception() if not task.cancelled() else None
-    if exc:
+        await asyncio.wait_for(coro, timeout=timeout)
+    except asyncio.TimeoutError:
+        pass
+    except Exception as exc:
         logger.warning(f"Error in {name}: {exc}")
 
 

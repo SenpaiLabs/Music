@@ -17,16 +17,6 @@ from anony import logger
 from anony.helpers import Track, utils
 
 
-class QuietLogger:
-    def debug(self, msg):
-        pass
-
-    def warning(self, msg):
-        pass
-
-    def error(self, msg):
-        pass
-
 
 class YouTube:
     def __init__(self):
@@ -99,7 +89,6 @@ class YouTube:
                     "nocheckcertificate": True,
                     "extract_flat": True,
                     "force_ipv4": True,
-                    "logger": QuietLogger(),
                 }
                 if cookie:
                     opts["cookiefile"] = cookie
@@ -355,7 +344,6 @@ class YouTube:
                     "overwrites": True,
                     "nocheckcertificate": True,
                     "force_ipv4": True,
-                    "logger": QuietLogger(),
                     "remote_components": ["ejs:github"],
                 }
                 if cookie:

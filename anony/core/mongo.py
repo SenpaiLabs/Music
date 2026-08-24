@@ -3,6 +3,7 @@
 # This file is part of AnonXMusic
 
 
+import asyncio
 from datetime import datetime, timezone
 from random import randint
 from time import time
@@ -60,7 +61,6 @@ class MongoDB:
         self._admin_flusher_task = None
 
     async def _admin_cache_flusher(self) -> None:
-        import asyncio
         while True:
             try:
                 await asyncio.sleep(900)  # 15 minutes
@@ -75,7 +75,6 @@ class MongoDB:
                 logger.error(f"Error in admin cache flusher: {e}")
 
     async def _stats_flusher(self) -> None:
-        import asyncio
         while True:
             try:
                 await asyncio.sleep(60)
@@ -146,7 +145,6 @@ class MongoDB:
         try:
             await self.load_cache()
 
-            import asyncio
             from anony import tasks
             self._flusher_task = asyncio.create_task(self._stats_flusher())
             self._admin_flusher_task = asyncio.create_task(self._admin_cache_flusher())
@@ -294,7 +292,7 @@ class MongoDB:
 
     # BLACKLIST METHODS
     async def add_blacklist(self, chat_id: int) -> None:
-        if str(chat_id).startswith("-"):
+        if chat_id < 0:
             self.blacklisted.append(chat_id)
             return await self.cache.update_one(
                 {"_id": "bl_chats"},
@@ -308,7 +306,7 @@ class MongoDB:
         )
 
     async def del_blacklist(self, chat_id: int) -> None:
-        if str(chat_id).startswith("-"):
+        if chat_id < 0:
             self.blacklisted.remove(chat_id)
             return await self.cache.update_one(
                 {"_id": "bl_chats"},
@@ -564,59 +562,9 @@ class MongoDB:
         return await self.afkdb.find_one({"_id": user_id})
 
 
-
-    async def migrate_coll(self) -> None:
-        logger.info("Migrating users and chats from old collections...")
-
-        users, musers, mchats = [], [], []
-        seen_chats, seen_users = set(), set()
-        users.extend([user async for user in self.usersdb.find()])
-        users.extend([user async for user in self.db.tgusersdb.find()])
-
-        for user in users:
-            _id = user.get("_id")
-            if isinstance(_id, int):
-                user_id = _id
-            else:
-                user_id = int(user.get("user_id"))
-
-            if user_id in seen_users:
-                continue
-            seen_users.add(user_id)
-            musers.append({"_id": user_id})
-
-        await self.usersdb.drop()
-        await self.db.tgusersdb.drop()
-        if musers:
-            await self.usersdb.insert_many(musers)
-
-        async for chat in self.chatsdb.find():
-            _id = chat.get("_id")
-            if isinstance(_id, int):
-                chat_id = _id
-            else:
-                chat_id = int(chat.get("chat_id"))
-
-            if chat_id in seen_chats:
-                continue
-            seen_chats.add(chat_id)
-            mchats.append({"_id": chat_id})
-
-        await self.chatsdb.drop()
-        if mchats:
-            await self.chatsdb.insert_many(mchats)
-
-        await self.cache.insert_one({"_id": "migrated"})
-        logger.info("Migration completed successfully.")
-
     async def load_cache(self) -> None:
-        doc = await self.cache.find_one({"_id": "migrated"})
-        if not doc:
-            await self.migrate_coll()
-
         await self.get_chats()
         await self.get_users()
         await self.get_blacklisted(True)
         await self.get_logger()
         logger.info("Database cache loaded.")
-

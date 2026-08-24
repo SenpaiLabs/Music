@@ -49,7 +49,6 @@ async def extract_bot_chats(_, message: types.Message):
                 memory_file.write(chunk.encode("utf-8"))
                     
                 successful += 1
-                await asyncio.sleep(0.3)  # Anti-flood delay
                 
             except FloodWait as e:
                 await asyncio.sleep(e.value + 1)
@@ -59,6 +58,8 @@ async def extract_bot_chats(_, message: types.Message):
                 failed += 1
             except Exception:
                 failed += 1
+            
+            await asyncio.sleep(2)
                 
         await mystic.delete()
         
