@@ -14,7 +14,18 @@ from pathlib import Path
 from py_yt import Playlist
 
 from anony import logger
-from anony.helpers import Track
+from anony.helpers import Track, utils
+
+
+class DummyLogger:
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        pass
 
 
 class YTDLLogger:
@@ -348,7 +359,8 @@ class YouTube:
                     "overwrites": True,
                     "nocheckcertificate": True,
                     "force_ipv4": True,
-                    "logger": YTDLLogger(),
+                    "logger": DummyLogger(),
+                    "remote_components": ["ejs:github"],
                 }
                 if cookie:
                     base_opts["cookiefile"] = cookie
