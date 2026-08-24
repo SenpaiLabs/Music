@@ -115,8 +115,8 @@ class YouTube:
             return Track(
                 id=data.get("id"),
                 channel_name=data.get("uploader"),
-                duration=time.strftime("%M:%S", time.gmtime(int(data.get("duration", 0)))),
-                duration_sec=int(data.get("duration", 0)),
+                duration=time.strftime("%M:%S", time.gmtime(int(data.get("duration") or 0))),
+                duration_sec=int(data.get("duration") or 0),
                 message_id=m_id,
                 title=data.get("title", "")[:25],
                 thumbnail=data.get("thumbnail", "").split("?")[0] if data.get("thumbnail") else "",
