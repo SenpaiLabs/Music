@@ -67,6 +67,9 @@ async def settings(_, message: types.Message):
             message.lang, admin_only, cmd_delete, _language, message.chat.id
         ),
         quote=True,
+        ephemeral_message_parameters=types.EphemeralMessageParameters(
+            receiver_user_id=message.from_user.id
+        )
     )
 
 

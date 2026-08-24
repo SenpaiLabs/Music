@@ -15,7 +15,6 @@ from anony.helpers import buttons
 @lang.language()
 async def _ping(_, m: types.Message):
     start = time.time()
-    sent = await m.reply_text(m.lang["pinging"])
     _s = int(time.time() - boot)
     _d, _s = divmod(_s, 86400)
     _h, _s = divmod(_s, 3600)
@@ -23,17 +22,18 @@ async def _ping(_, m: types.Message):
     _hms = f"{_h}h:{_m}m:{_s}s"
     uptime = f"{_d}days, {_hms}" if _d else _hms
     latency = round((time.time() - start) * 1000, 2)
-    await sent.edit_media(
-        media=types.InputMediaPhoto(
-            media=config.PING_IMG,
-            caption=m.lang["ping_pong"].format(
-                latency,
-                uptime,
-                psutil.cpu_percent(interval=0),
-                psutil.virtual_memory().percent,
-                psutil.disk_usage("/").percent,
-                await anon.ping(),
-            )
+    await m.reply_photo(
+        photo=config.PING_IMG,
+        caption=m.lang["ping_pong"].format(
+            latency,
+            uptime,
+            psutil.cpu_percent(interval=0),
+            psutil.virtual_memory().percent,
+            psutil.disk_usage("/").percent,
+            await anon.ping(),
         ),
         reply_markup=buttons.ping_markup(m.lang["support"]),
+        ephemeral_message_parameters=types.EphemeralMessageParameters(
+            receiver_user_id=m.from_user.id
+        )
     )

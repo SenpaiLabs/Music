@@ -14,7 +14,13 @@ from anony.helpers import admin_check, buttons
 async def _lang(_, m: types.Message):
     current = await db.get_lang(m.chat.id)
     keyboard = buttons.lang_markup(current)
-    await m.reply_text(m.lang["lang_choose"], reply_markup=keyboard)
+    await m.reply_text(
+        m.lang["lang_choose"],
+        reply_markup=keyboard,
+        ephemeral_message_parameters=types.EphemeralMessageParameters(
+            receiver_user_id=m.from_user.id
+        )
+    )
 
 
 @app.on_callback_query(filters.regex(r"^lang(?:_change|uage)") & ~app.bl_users)

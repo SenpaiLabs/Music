@@ -12,13 +12,16 @@ from anony.helpers import buttons, utils
 from anony.helpers._play import checkUB
 
 
-def playlist_to_queue(chat_id: int, tracks: list) -> str:
-    text = "<blockquote expandable>"
+def playlist_to_queue(chat_id: int, tracks: list):
+    items = []
     for track in tracks:
         pos = queue.add(chat_id, track)
-        text += f"<b>{pos}.</b> {track.title}\n"
-    text = text[:1948] + "</blockquote>"
-    return text
+        items.append(types.InputRichBlockListItem(
+            content=types.InputRichMessageContent(text=f"{pos}. {track.title}")
+        ))
+    return types.InputRichBlockExpandableBlockQuotation(
+        content=types.InputRichBlockList(items=items)
+    )
 
 @app.on_message(
     filters.command(["play", "playforce", "vplay", "vplayforce"])
@@ -111,7 +114,8 @@ async def play_hndlr(
                 added = playlist_to_queue(m.chat.id, tracks)
                 await app.send_message(
                     chat_id=m.chat.id,
-                    text=m.lang["playlist_queued"].format(len(tracks)) + added,
+                    text=m.lang["playlist_queued"].format(len(tracks)),
+                    rich_message=types.InputRichMessage(blocks=[added])
                 )
             return
 
@@ -129,5 +133,6 @@ async def play_hndlr(
     added = playlist_to_queue(m.chat.id, tracks)
     await app.send_message(
         chat_id=m.chat.id,
-        text=m.lang["playlist_queued"].format(len(tracks)) + added,
+        text=m.lang["playlist_queued"].format(len(tracks)),
+        rich_message=types.InputRichMessage(blocks=[added])
     )

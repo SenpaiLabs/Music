@@ -17,5 +17,8 @@ async def _leaderboard(_, m: types.Message):
     await m.reply_text(
         m.lang["leaderboard_menu"],
         reply_markup=buttons.leaderboard_markup(m.lang, m.chat.id),
+        ephemeral_message_parameters=types.EphemeralMessageParameters(
+            receiver_user_id=m.from_user.id
+        )
     )
 

@@ -18,10 +18,6 @@ from anony.plugins import all_modules
 @app.on_message(filters.command(["stats"]) & filters.group & ~app.bl_users)
 @lang.language()
 async def _stats(_, m: types.Message):
-    sent = await m.reply_photo(
-        photo=config.PING_IMG,
-        caption=m.lang["stats_fetching"],
-    )
 
     pid = os.getpid()
     _utext = m.lang["stats_user"].format(
@@ -50,4 +46,10 @@ async def _stats(_, m: types.Message):
             __version__,
             pytgver,
         )
-    await sent.edit_caption(_utext)
+    await m.reply_photo(
+        photo=config.PING_IMG,
+        caption=_utext,
+        ephemeral_message_parameters=types.EphemeralMessageParameters(
+            receiver_user_id=m.from_user.id
+        )
+    )
