@@ -11,9 +11,6 @@ from anony import app
 
 
 class Utilities:
-    def __init__(self):
-        pass
-
     def clear_cache(self, media) -> None:
         from anony import config
         if config.DB_CHANNEL and media and getattr(media, "file_path", None):
