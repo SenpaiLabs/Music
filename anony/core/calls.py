@@ -63,6 +63,13 @@ class TgCall:
 
     MAX_SKIP_ATTEMPTS = 5
 
+    async def _skip_or_stop(self, chat_id, message, text, attempt):
+        await message.edit_text(text)
+        if attempt >= self.MAX_SKIP_ATTEMPTS:
+            logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+            return await self.stop(chat_id)
+        return await self.play_next(chat_id, attempt=attempt + 1)
+
     async def play_media(
         self,
         chat_id: int,
@@ -80,11 +87,7 @@ class TgCall:
         ) if config.THUMB_GEN else None
 
         if not media.file_path:
-            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            if attempt >= self.MAX_SKIP_ATTEMPTS:
-                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
-                return await self.stop(chat_id)
-            return await self.play_next(chat_id, attempt=attempt + 1)
+            return await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
 
         stream = types.MediaStream(
             media_path=media.file_path,
@@ -159,27 +162,15 @@ class TgCall:
                 progress_manager.register(chat_id)
 
         except FileNotFoundError:
-            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            if attempt >= self.MAX_SKIP_ATTEMPTS:
-                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
-                return await self.stop(chat_id)
-            await self.play_next(chat_id, attempt=attempt + 1)
+            await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
         except ProcessLookupError as ex:
             logger.warning(f"Stream probe failed for {media.file_path}: {ex}")
-            await message.edit_text(_lang["error_no_file"].format(config.SUPPORT_CHAT))
-            if attempt >= self.MAX_SKIP_ATTEMPTS:
-                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
-                return await self.stop(chat_id)
-            await self.play_next(chat_id, attempt=attempt + 1)
+            await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
         except exceptions.NoActiveGroupCall:
             await self.stop(chat_id)
             await message.edit_text(_lang["error_no_call"])
         except exceptions.NoAudioSourceFound:
-            await message.edit_text(_lang["error_no_audio"])
-            if attempt >= self.MAX_SKIP_ATTEMPTS:
-                logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
-                return await self.stop(chat_id)
-            await self.play_next(chat_id, attempt=attempt + 1)
+            await self._skip_or_stop(chat_id, message, _lang["error_no_audio"], attempt)
         except (ConnectionError, ConnectionNotFound, TelegramServerError,
                 TransportParseException, TimeoutError):
             await self.stop(chat_id)
@@ -311,22 +302,18 @@ class TgCall:
                 duration_sec=getattr(media, "duration_sec", 0)
             )
             if not media.file_path:
-                await msg.edit_text(
-                    _lang["error_no_file"].format(config.SUPPORT_CHAT)
-                )
-                if attempt >= self.MAX_SKIP_ATTEMPTS:
-                    logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
-                    return await self.stop(chat_id)
-                return await self.play_next(chat_id, attempt=attempt + 1)
+                return await self._skip_or_stop(chat_id, msg, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
 
         media.message_id = msg.id
         await self.play_media(chat_id, msg, media, attempt=attempt)
 
         if media.user == "Autoplay" and await db.is_logger():
             try:
-                await utils.autoplay_log(
+                await utils.play_log(
                     chat_id,
                     msg.chat.title,
+                    "Autoplay",
+                    "Autoplay",
                     msg.link,
                     media.title,
                     media.duration,

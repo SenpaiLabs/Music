@@ -7,13 +7,12 @@ from anony import app
 
 async def reload_admins(chat_id: int) -> list[int]:
     try:
-        admins = [
-            admin
+        return [
+            admin.user.id
             async for admin in app.get_chat_members(
                 chat_id, filter=enums.ChatMembersFilter.ADMINISTRATORS
             )
             if not admin.user.is_bot
         ]
-        return [admin.user.id for admin in admins]
     except Exception:
         return []

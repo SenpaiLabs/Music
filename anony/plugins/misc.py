@@ -11,6 +11,8 @@ from pyrogram.raw.types import UpdateGroupCallParticipants
 from anony import anon, app, config, db, lang, queue, tasks, userbot
 from anony.helpers import buttons
 
+_AUTO_LEAVE_EXEMPT = {-1001686672798, -1001549206010}
+
 
 @app.on_message(filters.video_chat_started, group=19)
 @app.on_message(filters.video_chat_ended, group=20)
@@ -28,7 +30,7 @@ async def auto_leave():
                                 enums.ChatType.GROUP, enums.ChatType.SUPERGROUP,
                             ]][-20:]
                 for chat in chats:
-                    if chat in [app.logger, -1001686672798, -1001549206010]:
+                    if chat == app.logger or chat in _AUTO_LEAVE_EXEMPT:
                         continue
                     if chat in db.active_calls:
                         continue

@@ -16,8 +16,12 @@ from anony.helpers import buttons
 async def _ping(_, m: types.Message):
     start = time.time()
     sent = await m.reply_text(m.lang["pinging"])
-    get_time = lambda s: (lambda r: (f"{r[-1]}, " if r[-1][:-4] != "0" else "") + ":".join(reversed(r[:-1])))([f"{v}{u}" for v, u in zip([s%60, (s//60)%60, (s//3600)%24, s//86400], ["s", "m", "h", "days"])])
-    uptime = get_time(int(time.time() - boot))
+    _s = int(time.time() - boot)
+    _d, _s = divmod(_s, 86400)
+    _h, _s = divmod(_s, 3600)
+    _m, _s = divmod(_s, 60)
+    _hms = f"{_h}h:{_m}m:{_s}s"
+    uptime = f"{_d}days, {_hms}" if _d else _hms
     latency = round((time.time() - start) * 1000, 2)
     await sent.edit_media(
         media=types.InputMediaPhoto(

@@ -9,6 +9,7 @@ class Config:
         self.API_HASH = getenv("API_HASH", "")
 
         self.BOT_TOKEN = getenv("BOT_TOKEN", "")
+        self.IMGBB_API_KEY = getenv("IMGBB_API_KEY", "")
         self.MONGO_URL = getenv("MONGO_URL", "")
         self.SONG_CACHE_MONGO_URI = getenv("SONG_CACHE_MONGO_URI", "")
 
@@ -46,7 +47,7 @@ class Config:
     def check(self):
         missing = [
             var
-            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1", "SONG_CACHE_MONGO_URI"]
+            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "IMGBB_API_KEY", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1", "SONG_CACHE_MONGO_URI"]
             if not getattr(self, var)
         ]
         if missing:

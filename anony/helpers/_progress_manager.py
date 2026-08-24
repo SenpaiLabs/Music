@@ -8,40 +8,32 @@ import time
 from pyrogram.errors import MessageNotModified, MessageIdInvalid, FloodWait
 from anony.helpers import buttons
 
+
 class TokenBucket:
-    def __init__(self, capacity: int, fill_rate: float):
+    def __init__(self, fill_rate, capacity):
         self.capacity = float(capacity)
         self._tokens = float(capacity)
         self.fill_rate = float(fill_rate)
-        self.last_sync = time.monotonic()
-        self._lock = asyncio.Lock()
+        self.last_update = time.time()
 
-    async def consume(self, tokens: int = 1):
-        async with self._lock:
-            while True:
-                now = time.monotonic()
-                elapsed = now - self.last_sync
-                self._tokens = min(self.capacity, self._tokens + elapsed * self.fill_rate)
-                self.last_sync = now
-
-                if self._tokens >= tokens:
-                    self._tokens -= tokens
-                    return
-
-                # Wait until enough tokens are available
-                wait_time = (tokens - self._tokens) / self.fill_rate
-                await asyncio.sleep(wait_time)
+    def consume(self, tokens: int = 1) -> bool:
+        now = time.time()
+        self._tokens = min(self.capacity, self._tokens + (now - self.last_update) * self.fill_rate)
+        self.last_update = now
+        if self._tokens >= tokens:
+            self._tokens -= tokens
+            return True
+        return False
 
 
 class ProgressManager:
     def __init__(self):
-        # 30 edits per second maximum
-        self.rate_limiter = TokenBucket(capacity=30, fill_rate=30.0)
         self.queue = asyncio.Queue()
         self.active_chats = {} # chat_id -> asyncio.Task (loop task)
         self.pending_edits = {} # chat_id -> remaining_time (deduplication)
         self.workers = []
         self.is_running = False
+        self.bucket = TokenBucket(fill_rate=0.33, capacity=3)
 
     def start_workers(self, num_workers=5):
         if not self.is_running:
@@ -75,8 +67,11 @@ class ProgressManager:
                     self.queue.task_done()
                     continue
 
-                # Token bucket consume (Rate Limiting)
-                await self.rate_limiter.consume(1)
+                if not self.bucket.consume():
+                    await self.queue.put((chat_id, remaining_time, timer, needs_autoplay, played))
+                    self.queue.task_done()
+                    await asyncio.sleep(1)
+                    continue
 
                 autoplay = None
                 if needs_autoplay:

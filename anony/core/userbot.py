@@ -59,24 +59,11 @@ class Userbot:
         logger.info(f"Assistant {num} started as @{client.username}")
 
     async def boot(self):
-        """
-        Asynchronously starts the assistants.
-        """
-        if config.SESSION1:
-            await self.boot_client(1, self.one)
-        if config.SESSION2:
-            await self.boot_client(2, self.two)
-        if config.SESSION3:
-            await self.boot_client(3, self.three)
+        for i, client in enumerate([self.one, self.two, self.three], 1):
+            if getattr(config, f"SESSION{i}"):
+                await self.boot_client(i, client)
 
     async def exit(self):
-        """
-        Asynchronously stops the assistants.
-        """
-        if config.SESSION1:
-            await self.one.stop()
-        if config.SESSION2:
-            await self.two.stop()
-        if config.SESSION3:
-            await self.three.stop()
+        for client in self.clients:
+            await client.stop()
         logger.info("Assistants stopped.")

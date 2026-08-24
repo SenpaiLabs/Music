@@ -1,7 +1,7 @@
 import os
 import aiohttp
 from pyrogram import filters, types
-from anony import app, lang
+from anony import app, config, lang
 
 
 @app.on_message(filters.command(["tgm", "imgbb"]) & ~app.bl_users)
@@ -12,20 +12,14 @@ async def tgm_upload(_, message: types.Message):
         return await message.reply_text(message.lang["tgm_reply_media"])
 
     msg = await message.reply_text(message.lang["tgm_downloading"])
-    
+
     local_path = await reply.download()
     if not local_path:
         return await msg.edit_text(message.lang["tgm_download_fail"])
 
-    new_path = os.path.join(os.path.dirname(local_path), "abc.jpg")
-    if os.path.exists(new_path):
-        os.remove(new_path)
-    os.rename(local_path, new_path)
-    local_path = new_path
-
     await msg.edit_text(message.lang["tgm_uploading"].format("TGM"))
     try:
-        api_key = "c80e46893d6143f407e66fa944f0c46c"
+        api_key = config.IMGBB_API_KEY
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         }
