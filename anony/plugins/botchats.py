@@ -3,73 +3,47 @@
 # This file is part of AnonXMusic
 
 import asyncio
-import io
 from pyrogram import filters, types
 from pyrogram.errors import FloodWait, ChannelInvalid, ChannelPrivate, PeerIdInvalid
 
 from anony import app, db, lang
 
-botchats_lock = asyncio.Lock()
-
-@app.on_message(filters.command(["botchats", "grouplist"]) & filters.private & app.sudoers)
+@app.on_message(filters.command(["botchats"]) & filters.private & app.sudoers)
 @lang.language()
 async def extract_bot_chats(_, message: types.Message):
-    if botchats_lock.locked():
-        return await message.reply_text(message.lang["botchats_locked"])
-
-    mystic = await message.reply_text(message.lang["botchats_processing"])
+    if len(message.command) < 2:
+        return await message.reply_text(message.lang["bc_usage"])
     
-    chats = await db.get_chats()
-    if not chats:
-        return await mystic.edit_text(message.lang["botchats_empty"])
-    
-    async with botchats_lock:
-        memory_file = io.BytesIO()
-        memory_file.write(message.lang["botchats_header"].format(app.name.title()).encode("utf-8"))
+    try:
+        chat_id = int(message.command[1])
+    except ValueError:
+        return await message.reply_text(message.lang["bc_id"])
 
-        successful = 0
-        failed = 0
+    mystic = await message.reply_text(message.lang["bc_load"])
+    
+    try:
+        chat = await app.get_chat(chat_id)
         
-        for chat_id in chats:
-            try:
-                chat = await app.get_chat(chat_id)
-                
-                # Fetch or generate invite link
-                invite_link = chat.invite_link
-                if not invite_link:
-                    try:
-                        invite_link = await app.export_chat_invite_link(chat_id)
-                    except Exception:
-                        invite_link = message.lang["botchats_no_link"]
-                
-                chat_title = chat.title or "Unknown Title"
-                members = chat.members_count or 0
-                
-                chunk = message.lang["botchats_chunk"].format(chat_title, chat_id, members, invite_link)
-                memory_file.write(chunk.encode("utf-8"))
-                    
-                successful += 1
-                
-            except FloodWait as e:
-                await asyncio.sleep(e.value + 1)
-            except (ChannelInvalid, ChannelPrivate, PeerIdInvalid):
-                # Bot is no longer in this group, clean DB
-                await db.rm_chat(chat_id)
-                failed += 1
-            except Exception:
-                failed += 1
-            
-            await asyncio.sleep(2)
-                
-        await mystic.delete()
+        invite_link = chat.invite_link
+        if not invite_link:
+            if chat.username:
+                invite_link = f"https://t.me/{chat.username}"
+            else:
+                try:
+                    invite_link = await app.export_chat_invite_link(chat_id)
+                except Exception:
+                    invite_link = message.lang["bc_nolink"]
         
-        caption = message.lang["botchats_done"].format(len(chats), successful, failed)
+        chat_title = chat.title or "Unknown Title"
+        members = chat.members_count or 0
         
-        memory_file.name = f"bot_groups_{message.from_user.id}.txt"
+        text = message.lang["bc_res"].format(chat_title, chat_id, members, invite_link)
+        await mystic.edit_text(text)
         
-        await message.reply_document(
-            document=memory_file,
-            caption=caption
-        )
-        
-        memory_file.close()
+    except FloodWait as e:
+        await mystic.edit_text(message.lang["bc_fw"].format(e.value))
+    except (ChannelInvalid, ChannelPrivate, PeerIdInvalid):
+        await mystic.edit_text(message.lang["bc_nf"])
+        await db.rm_chat(chat_id)
+    except Exception as e:
+        await mystic.edit_text(message.lang["bc_err"].format(e))

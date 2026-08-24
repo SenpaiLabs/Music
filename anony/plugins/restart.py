@@ -56,6 +56,8 @@ async def _restart(_, m: types.Message):
     try:
         task = asyncio.create_task(stop())
         await asyncio.wait([task], timeout=30)
+    except asyncio.CancelledError:
+        pass
     except Exception as e:
         logger.error(f"Error during shutdown before restart:\n{format_exception(e)}")
 
