@@ -164,10 +164,7 @@ class MongoDB:
             self._admin_flusher_task.cancel()
 
         await self.mongo.close()
-        logger.info("Primary MongoDB connection closed.")
-        
         await self.song_cache_mongo.close()
-        logger.info("Song Cache MongoDB connection closed.")
 
     # SONG CACHE METHODS
     async def get_song_cache(self, video_id: str, video: bool) -> dict | None:

@@ -93,5 +93,5 @@ async def stop() -> None:
     await _graceful(db.close(), "db.close")
     await _graceful(thumb.close(), "thumb.close")
 
-    logger.info("Stopped.\n")
+    logger.info("Stopping...\n")
 
