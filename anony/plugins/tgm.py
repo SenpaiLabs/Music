@@ -1,7 +1,7 @@
 import os
 import aiohttp
 from pyrogram import filters, types
-from anony import app, lang
+from anony import app, config, lang
 
 
 @app.on_message(filters.command(["tgm", "imgbb"]) & ~app.bl_users)
@@ -25,7 +25,7 @@ async def tgm_upload(_, message: types.Message):
 
     await msg.edit_text(message.lang["tgm_uploading"].format("TGM"))
     try:
-        api_key = "c80e46893d6143f407e66fa944f0c46c"
+        api_key = config.IMGBB_API_KEY
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
         }
