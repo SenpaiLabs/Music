@@ -26,7 +26,7 @@ class Queue:
         pos, track = next(
             (
                 (i, track)
-                for i, track in enumerate(list(self.queues[chat_id]))
+                for i, track in enumerate(self.queues[chat_id])
                 if track.id == item_id
             ),
             (-1, None),
