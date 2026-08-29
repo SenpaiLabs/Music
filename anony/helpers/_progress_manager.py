@@ -82,40 +82,30 @@ class ProgressManager:
                     )
 
                 try:
-                    from anony import config
-                    if config.THUMB_GEN:
-                        await app.edit_message_reply_markup(
+                    text = _lang["play_media"].format(
+                        media.url,
+                        media.title,
+                        f"{time.strftime('%M:%S', time.gmtime(played))} / {media.duration}",
+                        media.user,
+                    )
+                    markup = buttons.controls(
+                        chat_id=chat_id, timer=None, autoplay=autoplay, remove=False
+                    )
+                    try:
+                        await app.edit_message_text(
                             chat_id=chat_id,
                             message_id=media.message_id,
-                            reply_markup=buttons.controls(
-                                chat_id=chat_id, timer=timer, autoplay=autoplay, remove=False
-                            )
+                            text=text,
+                            reply_markup=markup,
+                            disable_web_page_preview=True
                         )
-                    else:
-                        text = _lang["play_media"].format(
-                            media.url,
-                            media.title,
-                            f"{time.strftime('%M:%S', time.gmtime(played))} / {media.duration}",
-                            media.user,
+                    except Exception:
+                        await app.edit_message_caption(
+                            chat_id=chat_id,
+                            message_id=media.message_id,
+                            caption=text,
+                            reply_markup=markup,
                         )
-                        markup = buttons.controls(
-                            chat_id=chat_id, timer=None, autoplay=autoplay, remove=False
-                        )
-                        try:
-                            await app.edit_message_text(
-                                chat_id=chat_id,
-                                message_id=media.message_id,
-                                text=text,
-                                reply_markup=markup,
-                                disable_web_page_preview=True
-                            )
-                        except Exception:
-                            await app.edit_message_caption(
-                                chat_id=chat_id,
-                                message_id=media.message_id,
-                                caption=text,
-                                reply_markup=markup,
-                            )
                 except MessageNotModified:
                     pass
                 except MessageIdInvalid:
@@ -199,15 +189,8 @@ class ProgressManager:
                 if remaining < 10:
                     continue # handled by remove=True in main update loop or stop
 
-                from anony import config
-                if config.THUMB_GEN:
-                    pos = min(int((played / duration) * 10), 9)
-                    bar = "—" * pos + "◉" + "—" * (9 - pos)
-                    timer = f"{time.strftime('%M:%S', time.gmtime(played))} | {bar} | -{time.strftime('%M:%S', time.gmtime(remaining))}"
-                    needs_autoplay = False
-                else:
-                    timer = None
-                    needs_autoplay = True
+                timer = None
+                needs_autoplay = True
 
                 self.pending_edits[chat_id] = remaining
                 await self.queue.put((chat_id, remaining, timer, needs_autoplay, played))

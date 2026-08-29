@@ -214,5 +214,16 @@
     "bc_err": "एक त्रुटि हुई: {0}",
     "t_stp": "टैगिंग रोक दी गई है। शांति बहाल हुई। 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "प्रबंधन",
+    "help_manage": "<u><b>प्रबंधन कमांड:</b></u>\n<i>आसानी से अपने समूह का प्रबंधन करें।</i>\n\n/pin [reply]: संदेश पिन करें।\n/unpin [reply]: संदेश अनपिन करें।\n/ban [reply]: उपयोगकर्ता को बैन करें।\n/unban [reply]: उपयोगकर्ता को अनबैन करें।\n/mute [reply]: उपयोगकर्ता को हमेशा के लिए म्यूट करें।\n/tmute [time] [reply]: उपयोगकर्ता को कुछ समय के लिए म्यूट करें (जैसे 10m, 2h, 1d)।\n/unmute [reply]: उपयोगकर्ता को अनम्यूट करें।\n/purge [reply]: संदेश हटाएं।\n/staff: एडमिन की सूची।",
+    "m_invalid_target": "उपयोगकर्ता को रिप्लाई करें या वैध ID/username दें।",
+    "m_muted_perm": "{0} को म्यूट कर दिया गया।",
+    "m_provide_time": "कृपया समय बताएं (जैसे /tmute 10m)।",
+    "m_invalid_time": "अमान्य समय प्रारूप।",
+    "m_muted_temp": "{0} को {1} के लिए म्यूट किया गया।",
+    "m_unmuted": "{0} को अनम्यूट किया गया।",
+    "m_banned": "{0} को बैन किया गया।",
+    "m_unbanned": "{0} को अनबैन किया गया।",
+    "m_staff_title": "एडमिन:\n"
 }

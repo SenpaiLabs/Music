@@ -214,5 +214,16 @@
     "bc_err": "Bir hata oluştu: {0}",
     "t_stp": "Etiketleme iptal edildi. Barış sağlandı. 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "Yönetim",
+    "help_manage": "<u><b>Yönetim komutları:</b></u>\n<i>Grubunuzu kolayca yönetin.</i>\n\n/pin [reply]: Mesajı sabitle.\n/unpin [reply]: Sabitlemeyi kaldır.\n/ban [reply]: Kullanıcıyı yasakla.\n/unban [reply]: Yasaklamayı kaldır.\n/mute [reply]: Kullanıcıyı kalıcı olarak sustur.\n/tmute [time] [reply]: Kullanıcıyı geçici sustur (örn. 10m, 2h, 1d).\n/unmute [reply]: Susturmayı kaldır.\n/purge [reply]: Mesajları sil.\n/staff: Yönetici listesi.",
+    "m_invalid_target": "Bir kullanıcıya yanıt verin veya geçerli bir ID/kullanıcı adı sağlayın.",
+    "m_muted_perm": "{0} kalıcı olarak susturuldu.",
+    "m_provide_time": "Lütfen süre sağlayın (örn. /tmute 10m).",
+    "m_invalid_time": "Geçersiz süre biçimi.",
+    "m_muted_temp": "{0}, {1} süreliğine susturuldu.",
+    "m_unmuted": "{0} susturması kaldırıldı.",
+    "m_banned": "{0} yasaklandı.",
+    "m_unbanned": "{0} yasaklaması kaldırıldı.",
+    "m_staff_title": "Yöneticiler:\n"
 }

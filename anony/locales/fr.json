@@ -214,5 +214,16 @@
     "bc_err": "Une erreur s'est produite: {0}",
     "t_stp": "Marquage annulé. Paix restaurée. 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "Gérer",
+    "help_manage": "<u><b>Commandes de gestion:</b></u>\n<i>Gérez votre groupe facilement.</i>\n\n/pin [reply]: Épingler un message.\n/unpin [reply]: Désépingler un message.\n/ban [reply]: Bannir un utilisateur.\n/unban [reply]: Débannir un utilisateur.\n/mute [reply]: Rendre muet définitivement.\n/tmute [time] [reply]: Rendre muet temporairement (ex. 10m, 2h, 1d).\n/unmute [reply]: Rétablir la voix d'un utilisateur.\n/purge [reply]: Supprimer des messages.\n/staff: Liste des administrateurs.",
+    "m_invalid_target": "Répondez à un utilisateur ou fournissez un ID/nom d'utilisateur valide.",
+    "m_muted_perm": "{0} rendu muet définitivement.",
+    "m_provide_time": "Veuillez fournir le temps (ex. /tmute 10m).",
+    "m_invalid_time": "Format de temps invalide.",
+    "m_muted_temp": "{0} rendu muet pour {1}.",
+    "m_unmuted": "Voix rétablie pour {0}.",
+    "m_banned": "{0} banni.",
+    "m_unbanned": "{0} débanni.",
+    "m_staff_title": "Administrateurs:\n"
 }

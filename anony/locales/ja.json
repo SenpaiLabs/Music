@@ -214,5 +214,16 @@
     "bc_err": "エラーが発生しました: {0}",
     "t_stp": "タグ付けがキャンセルされました。平和が戻りました。 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "管理",
+    "help_manage": "<u><b>管理コマンド:</b></u>\n<i>グループを簡単に管理。</i>\n\n/pin [reply]: メッセージを固定。\n/unpin [reply]: 固定を解除。\n/ban [reply]: ユーザーをBAN。\n/unban [reply]: BANを解除。\n/mute [reply]: ユーザーを永久にミュート。\n/tmute [time] [reply]: ユーザーを一時的にミュート (例 10m, 2h, 1d)。\n/unmute [reply]: ミュートを解除。\n/purge [reply]: メッセージを削除。\n/staff: 管理者リスト。",
+    "m_invalid_target": "ユーザーに返信するか、有効なID/ユーザー名を入力してください。",
+    "m_muted_perm": "{0} は永久にミュートされました。",
+    "m_provide_time": "時間を指定してください（例: /tmute 10m）。",
+    "m_invalid_time": "無効な時間形式。",
+    "m_muted_temp": "{0} は {1} ミュートされました。",
+    "m_unmuted": "{0} のミュートを解除しました。",
+    "m_banned": "{0} をBANしました。",
+    "m_unbanned": "{0} のBANを解除しました。",
+    "m_staff_title": "管理者:\n"
 }

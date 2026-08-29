@@ -214,5 +214,16 @@
     "bc_err": "Ocurrió un error: {0}",
     "t_stp": "Etiquetado cancelado. Paz restaurada. 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "Administrar",
+    "help_manage": "<u><b>Comandos de gestión:</b></u>\n<i>Gestiona tu grupo fácilmente.</i>\n\n/pin [reply]: Fijar un mensaje.\n/unpin [reply]: Desfijar un mensaje.\n/ban [reply]: Banear a un usuario.\n/unban [reply]: Desbanear a un usuario.\n/mute [reply]: Silenciar a un usuario permanentemente.\n/tmute [time] [reply]: Silenciar temporalmente (ej. 10m, 2h, 1d).\n/unmute [reply]: Desilenciar a un usuario.\n/purge [reply]: Eliminar mensajes.\n/staff: Lista de administradores.",
+    "m_invalid_target": "Responde a un usuario o proporciona un ID/nombre de usuario válido.",
+    "m_muted_perm": "{0} silenciado permanentemente.",
+    "m_provide_time": "Proporcione tiempo (ej. /tmute 10m).",
+    "m_invalid_time": "Formato de tiempo inválido.",
+    "m_muted_temp": "{0} silenciado por {1}.",
+    "m_unmuted": "Se anuló el silencio a {0}.",
+    "m_banned": "Baneado {0}.",
+    "m_unbanned": "Desbaneado {0}.",
+    "m_staff_title": "Administradores:\n"
 }

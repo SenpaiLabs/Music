@@ -159,70 +159,28 @@ class YouTube:
 
     async def autoplay(self, video_id: str, history: set, video: bool = False) -> Track | None:
         try:
-            timeout = aiohttp.ClientTimeout(total=15)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(f"https://www.youtube.com/watch?v={video_id}") as resp:
-                    if resp.status != 200:
-                        return None
-                    text = await resp.text()
+            def _extract_mix():
+                cookie = self.get_cookies()
+                opts = {
+                    "format": "bestaudio",
+                    "quiet": True,
+                    "extract_flat": True,
+                    "geo_bypass": True,
+                    "nocheckcertificate": True,
+                    "force_ipv4": True,
+                    "logger": QuietLogger(),
+                    "playlistend": 8,
+                }
+                if cookie:
+                    opts["cookiefile"] = cookie
 
-            current_title = "Unknown"
-            title_match = re.search(r"<title>(.*?)</title>", text)
-            if title_match:
-                current_title = title_match.group(1).replace(" - YouTube", "").strip()
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}", download=False)
 
-            # Resilient extraction of API key and client version
-            match = re.search(r'"INNERTUBE_API_KEY":"(.*?)"', text)
-            if not match:
-                logger.warning("Autoplay failed: INNERTUBE_API_KEY not found in HTML.")
+            info = await asyncio.to_thread(_extract_mix)
+            if not info or "entries" not in info or not info["entries"]:
+                logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
                 return None
-            api_key = match.group(1)
-
-            version_match = re.search(r'"INNERTUBE_CONTEXT_CLIENT_VERSION":"(.*?)"', text)
-            client_version = version_match.group(1) if version_match else "2.20230301.09.00"
-
-            payload = {
-                "context": {
-                    "client": {
-                        "clientName": "WEB",
-                        "clientVersion": client_version
-                    }
-                },
-                "videoId": video_id,
-                "playlistId": f"RD{video_id}"
-            }
-
-            url = f"https://www.youtube.com/youtubei/v1/next?key={api_key}"
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(url, json=payload) as resp:
-                    if resp.status != 200:
-                        logger.warning(f"Autoplay API failed with status {resp.status}")
-                        return None
-                    data = await resp.json()
-
-            def iter_videos(obj):
-                if isinstance(obj, dict):
-                    for key in ["playlistPanelVideoRenderer", "compactVideoRenderer", "endScreenVideoRenderer", "watchCardCompactVideoRenderer"]:
-                        if key in obj:
-                            yield obj[key]
-                    for v in obj.values():
-                        yield from iter_videos(v)
-                elif isinstance(obj, list):
-                    for item in obj:
-                        yield from iter_videos(item)
-
-            videos = list(iter_videos(data))
-            if not videos:
-                logger.warning("Autoplay failed: No playlistPanelVideoRenderer found in /next response.")
-                return None
-
-            next_id = None
-            title = "Unknown"
-            duration = "0:00"
-            duration_sec = 0
-            uploader = "Autoplay"
-            thumbnail = ""
-            view_count = ""
 
             def get_title_words(t):
                 t = re.sub(r'\(.*?\)', '', t)
@@ -233,13 +191,20 @@ class YouTube:
                 t = re.sub(r'[^a-z0-9\s]', '', t)
                 return set(t.split())
 
-            curr_words = get_title_words(current_title) if current_title != "Unknown" else set()
+            # Find the entry matching the current video_id; fall back to the
+            # first entry if it isn't present (RD mixes usually place the
+            # currently playing video first, but this isn't guaranteed).
+            current_title = next(
+                (e.get("title", "") for e in info["entries"] if e.get("id") == video_id),
+                info["entries"][0].get("title", ""),
+            )
+            curr_words = get_title_words(current_title) if current_title else set()
 
-            for rnd in videos:
-                vid = rnd.get("videoId")
+            next_id = None
+            for entry in info["entries"]:
+                vid = entry.get("id")
                 if vid and vid != video_id and vid not in history:
-                    title_obj = rnd.get("title", {})
-                    candidate_title = title_obj.get("simpleText") or (title_obj.get("runs", [{}])[0].get("text", "Unknown"))
+                    candidate_title = entry.get("title", "")
 
                     if curr_words:
                         cand_words = get_title_words(candidate_title)
@@ -248,48 +213,15 @@ class YouTube:
                             continue
 
                     next_id = vid
-                    title = candidate_title
-
-                    len_obj = rnd.get("lengthText", {})
-                    duration = len_obj.get("simpleText") or (len_obj.get("runs", [{}])[0].get("text", "0:00"))
-
-                    upl_obj = rnd.get("shortBylineText", {})
-                    uploader = upl_obj.get("simpleText") or (upl_obj.get("runs", [{}])[0].get("text", uploader))
-
-                    thumbs = rnd.get("thumbnail", {}).get("thumbnails", [])
-                    if thumbs:
-                        thumbnail = thumbs[-1].get("url", "")
-
                     break
 
             if not next_id:
-                logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
+                logger.warning("Autoplay exhausted: No valid tracks found in RD mix.")
                 return None
 
             track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
-            if track:
-                track.channel_name = uploader
-                return track
+            return track
 
-            # Fallback if search fails
-            parts = duration.split(":")
-            if len(parts) == 3:
-                duration_sec = int(parts[0])*3600 + int(parts[1])*60 + int(parts[2])
-            elif len(parts) == 2:
-                duration_sec = int(parts[0])*60 + int(parts[1])
-
-            return Track(
-                id=next_id,
-                channel_name=uploader,
-                duration=duration,
-                duration_sec=duration_sec,
-                message_id=0,
-                title=title[:25],
-                thumbnail=thumbnail.split("?")[0] if thumbnail else "",
-                url=self.base + next_id,
-                view_count=view_count,
-                video=video,
-            )
         except Exception as e:
             logger.warning(f"Autoplay fetch failed: {e}")
             return None

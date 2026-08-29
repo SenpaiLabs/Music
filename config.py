@@ -31,7 +31,6 @@ class Config:
         self.AUTO_LEAVE: bool = getenv("AUTO_LEAVE", "False").lower() == "true"
         self.AUTO_END: bool = getenv("AUTO_END", "True").lower() == "true"
 
-        self.THUMB_GEN: bool = getenv("THUMB_GEN", "False").lower() == "true"
         self.VIDEO_PLAY: bool = getenv("VIDEO_PLAY", "True").lower() == "true"
 
         self.LANG_CODE = getenv("LANG_CODE", "en")
@@ -40,7 +39,6 @@ class Config:
             url for url in getenv("COOKIES_URL", "https://batbin.me/deejay").split(" ")
             if url and "batbin.me" in url
         ]
-        self.DEFAULT_THUMB = getenv("DEFAULT_THUMB", "https://te.legra.ph/file/3e40a408286d4eda24191.jpg")
         self.PING_IMG = getenv("PING_IMG", "https://ibb.co/xSdP4GkB")
         self.START_IMG = getenv("START_IMG", "https://ibb.co/v4tWZdCh")
 

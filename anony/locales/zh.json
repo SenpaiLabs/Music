@@ -214,5 +214,16 @@
     "bc_err": "发生错误: {0}",
     "t_stp": "标记已取消。和平恢复。 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "管理",
+    "help_manage": "<u><b>管理命令:</b></u>\n<i>轻松管理您的群组。</i>\n\n/pin [reply]: 置顶消息。\n/unpin [reply]: 取消置顶。\n/ban [reply]: 封禁用户。\n/unban [reply]: 解封用户。\n/mute [reply]: 永久禁言。\n/tmute [time] [reply]: 临时禁言 (例如 10m, 2h, 1d)。\n/unmute [reply]: 解除禁言。\n/purge [reply]: 清理消息。\n/staff: 管理员列表。",
+    "m_invalid_target": "回复用户或提供有效的 ID/用户名。",
+    "m_muted_perm": "已永久禁言 {0}。",
+    "m_provide_time": "请提供时间（例如 /tmute 10m）。",
+    "m_invalid_time": "无效的时间格式。",
+    "m_muted_temp": "已将 {0} 禁言 {1}。",
+    "m_unmuted": "已解除 {0} 的禁言。",
+    "m_banned": "已封禁 {0}。",
+    "m_unbanned": "已解封 {0}。",
+    "m_staff_title": "管理员:\n"
 }

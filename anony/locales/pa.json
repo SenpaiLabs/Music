@@ -214,5 +214,16 @@
     "bc_err": "ਇੱਕ ਗਲਤੀ ਹੋਈ: {0}",
     "t_stp": "ਟੈਗਿੰਗ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ ਹੈ। ਸ਼ਾਂਤੀ ਬਹਾਲ ਹੋਈ। 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "ਪ੍ਰਬੰਧਨ",
+    "help_manage": "<u><b>ਪ੍ਰਬੰਧਨ ਕਮਾਂਡ:</b></u>\n<i>ਆਪਣੇ ਗਰੁੱਪ ਦਾ ਆਸਾਨੀ ਨਾਲ ਪ੍ਰਬੰਧਨ ਕਰੋ।</i>\n\n/pin [reply]: ਸੁਨੇਹਾ ਪਿੰਨ ਕਰੋ।\n/unpin [reply]: ਸੁਨੇਹਾ ਅਨਪਿੰਨ ਕਰੋ।\n/ban [reply]: ਯੂਜ਼ਰ ਨੂੰ ਬੈਨ ਕਰੋ।\n/unban [reply]: ਯੂਜ਼ਰ ਨੂੰ ਅਨਬੈਨ ਕਰੋ।\n/mute [reply]: ਯੂਜ਼ਰ ਨੂੰ ਹਮੇਸ਼ਾ ਲਈ ਮਿਊਟ ਕਰੋ।\n/tmute [time] [reply]: ਯੂਜ਼ਰ ਨੂੰ ਕੁਝ ਸਮੇਂ ਲਈ ਮਿਊਟ ਕਰੋ (ਜਿਵੇਂ 10m, 2h, 1d)।\n/unmute [reply]: ਯੂਜ਼ਰ ਨੂੰ ਅਨਮਿਊਟ ਕਰੋ।\n/purge [reply]: ਸੁਨੇਹੇ ਮਿਟਾਓ।\n/staff: ਐਡਮਿਨ ਦੀ ਸੂਚੀ।",
+    "m_invalid_target": "ਕਿਸੇ ਯੂਜ਼ਰ ਨੂੰ ਰਿਪਲਾਈ ਕਰੋ ਜਾਂ ਸਹੀ ID/username ਦਿਓ।",
+    "m_muted_perm": "{0} ਨੂੰ ਹਮੇਸ਼ਾ ਲਈ ਮਿਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "m_provide_time": "ਕਿਰਪਾ ਕਰਕੇ ਸਮਾਂ ਦੱਸੋ (ਜਿਵੇਂ /tmute 10m)।",
+    "m_invalid_time": "ਗਲਤ ਸਮਾਂ ਫਾਰਮੈਟ।",
+    "m_muted_temp": "{0} ਨੂੰ {1} ਲਈ ਮਿਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "m_unmuted": "{0} ਨੂੰ ਅਨਮਿਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "m_banned": "{0} ਨੂੰ ਬੈਨ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "m_unbanned": "{0} ਨੂੰ ਅਨਬੈਨ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "m_staff_title": "ਐਡਮਿਨ:\n"
 }

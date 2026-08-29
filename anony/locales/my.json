@@ -214,5 +214,16 @@
     "bc_err": "အမှားတစ်ခု ဖြစ်ပွားခဲ့သည်: {0}",
     "t_stp": "တဂ်လုပ်ခြင်းကို ရပ်ဆိုင်းလိုက်ပါပြီ။ ငြိမ်းချမ်းရေး ပြန်လည်ရရှိပြီ။ 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "စီမံခန့်ခွဲမှု",
+    "help_manage": "<u><b>စီမံခန့်ခွဲမှုဆိုင်ရာ ညွှန်ကြားချက်များ:</b></u>\n<i>သင်၏အဖွဲ့ကို လွယ်ကူစွာ စီမံခန့်ခွဲပါ။</i>\n\n/pin [reply]: မက်ဆေ့ခ်ျကို ပင်ထိုးပါ။\n/unpin [reply]: မက်ဆေ့ခ်ျ ပင်ဖြုတ်ပါ။\n/ban [reply]: အသုံးပြုသူကို ပိတ်ပင်ပါ။\n/unban [reply]: ပိတ်ပင်ထားမှုကို ရုပ်သိမ်းပါ။\n/mute [reply]: အမြဲတမ်း အသံပိတ်ပါ။\n/tmute [time] [reply]: ခေတ္တ အသံပိတ်ပါ (ဥပမာ 10m, 2h, 1d)။\n/unmute [reply]: အသံပိတ်ထားမှုကို ရုပ်သိမ်းပါ။\n/purge [reply]: မက်ဆေ့ခ်ျများကို ဖျက်ပါ။\n/staff: စီမံခန့်ခွဲသူများ စာရင်း။",
+    "m_invalid_target": "အသုံးပြုသူကို အကြောင်းပြန်ပါ သို့မဟုတ် မှန်ကန်သော ID/username ကိုပေးပါ။",
+    "m_muted_perm": "{0} ကို အမြဲတမ်း အသံပိတ်လိုက်သည်။",
+    "m_provide_time": "အချိန်ကိုပေးပါ (ဥပမာ /tmute 10m)။",
+    "m_invalid_time": "မှားယွင်းသော အချိန်ပုံစံ။",
+    "m_muted_temp": "{0} ကို {1} အတွက် အသံပိတ်လိုက်သည်။",
+    "m_unmuted": "{0} ၏ အသံပိတ်ထားမှုကို ရုပ်သိမ်းလိုက်သည်။",
+    "m_banned": "{0} ကို ပိတ်ပင်လိုက်သည်။",
+    "m_unbanned": "{0} ၏ ပိတ်ပင်ထားမှုကို ရုပ်သိမ်းလိုက်သည်။",
+    "m_staff_title": "စီမံခန့်ခွဲသူများ:\n"
 }

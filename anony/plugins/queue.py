@@ -5,8 +5,8 @@
 
 from pyrogram import filters, types
 
-from anony import app, config, db, lang, queue, thumb
-from anony.helpers import Track, buttons
+from anony import app, db, lang, queue
+from anony.helpers import buttons
 
 
 @app.on_message(filters.command(["queue", "playing"]) & filters.group & ~app.bl_users)
@@ -18,11 +18,7 @@ async def _queue_func(_, m: types.Message):
     _reply = await m.reply_text(m.lang["queue_fetching"])
     _queue = queue.get_queue(m.chat.id)
     _media = _queue[0]
-    _thumb = (
-        await thumb.generate(_media)
-        if isinstance(_media, Track)
-        else config.DEFAULT_THUMB
-    ) if config.THUMB_GEN else None
+
     _text = m.lang["queue_curr"].format(
         _media.url,
         _media.title[:50],
@@ -47,16 +43,14 @@ async def _queue_func(_, m: types.Message):
             m.lang["playing"] if _playing else m.lang["paused"],
             _playing,
         )
-    if _thumb:
-        await _reply.edit_media(
-            media=types.InputMediaPhoto(
-                media=_thumb,
-                caption=_text,
-            ),
+    try:
+        await _reply.edit_text(
+            text=_text,
             reply_markup=_buttons,
         )
-    else:
-        await _reply.edit_text(
+    except Exception:
+        await _reply.delete()
+        await m.reply_text(
             text=_text,
             reply_markup=_buttons,
         )

@@ -214,5 +214,16 @@
     "bc_err": "An error occurred: {0}",
     "t_stp": "Tagging cancelled. Peace restored. 🕊️",
     "help_10": "Mention",
-    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process."
+    "help_mention": "<u><b>Mention commands:</b></u>\n\n/mention [text or reply]: Tag all members in the group.\n<b>Example:</b> /mention Hello everyone!\n\n/cancel: Stop the ongoing tagging process.",
+    "help_11": "Manage",
+    "help_manage": "<u><b>Management commands:</b></u>\n<i>Manage your group easily with native tools.</i>\n\n/pin [reply]: Pin a message.\n/unpin [reply]: Unpin a message.\n/ban [reply]: Ban a user from the group.\n/unban [reply]: Unban a user.\n/mute [reply]: Mute a user permanently.\n/tmute [time] [reply]: Mute a user temporarily (e.g. 10m, 2h, 1d).\n/unmute [reply]: Unmute a user.\n/purge [reply]: Delete messages from the replied message up to the current one.\n/staff: Get a list of all group administrators.",
+    "m_invalid_target": "Please reply to a user or provide a valid ID/username.",
+    "m_muted_perm": "Muted {0}.",
+    "m_provide_time": "Please provide a time duration (e.g. /tmute 10m).",
+    "m_invalid_time": "Invalid time format.",
+    "m_muted_temp": "Muted {0} for {1}.",
+    "m_unmuted": "Unmuted {0}.",
+    "m_banned": "Banned {0}.",
+    "m_unbanned": "Unbanned {0}.",
+    "m_staff_title": "Admins:\n"
 }

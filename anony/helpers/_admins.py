@@ -41,6 +41,7 @@ def admin_check(func):
     return wrapper
 
 
+
 def can_manage_vc(func):
     @wraps(func)
     async def wrapper(_, update: types.Message | types.CallbackQuery, *args, **kwargs):

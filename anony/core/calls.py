@@ -18,7 +18,7 @@ from pytgcalls import PyTgCalls, exceptions, types
 from pytgcalls.pytgcalls_session import PyTgCallsSession
 
 from anony import (app, config, db, lang, logger,
-                   queue, thumb, userbot, yt)
+                   queue, userbot, yt)
 from anony.helpers import Media, Track, buttons, utils, progress_manager
 
 
@@ -80,11 +80,6 @@ class TgCall:
     ) -> None:
         client = await db.get_assistant(chat_id)
         _lang = await lang.get_lang(chat_id)
-        _thumb = (
-            await thumb.generate(media)
-            if isinstance(media, Track)
-            else config.DEFAULT_THUMB
-        ) if config.THUMB_GEN else None
 
         if not media.file_path:
             return await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
@@ -130,36 +125,49 @@ class TgCall:
                 for _ in range(2):
                     try:
                         try:
-                            if _thumb:
-                                await message.edit_media(
-                                    media=InputMediaPhoto(
-                                        media=_thumb,
-                                        caption=text,
-                                    ),
-                                    reply_markup=keyboard,
-                                )
-                            else:
-                                await message.edit_text(text, reply_markup=keyboard)
-                        except (ChatSendMediaForbidden, ChatSendPhotosForbidden, MessageIdInvalid):
-                            if _thumb:
-                                sent = await app.send_photo(
-                                    chat_id=chat_id,
-                                    photo=_thumb,
-                                    caption=text,
-                                    reply_markup=keyboard,
-                                )
-                            else:
-                                sent = await app.send_message(
-                                    chat_id=chat_id,
-                                    text=text,
-                                    reply_markup=keyboard,
-                                )
+                            await message.edit_text(text, reply_markup=keyboard)
+                        except Exception:
+                            sent = await app.send_message(
+                                chat_id=chat_id,
+                                text=text,
+                                reply_markup=keyboard,
+                            )
                             media.message_id = sent.id
                         break
                     except errors.FloodWait as fw:
                         await asyncio.sleep(fw.value)
 
                 progress_manager.register(chat_id)
+
+                async def prefetch_autoplay():
+                    try:
+                        if queue.get_next(chat_id, check=True):
+                            return
+                        if not await db.get_autoplay(chat_id):
+                            return
+                        hist = set(queue.get_history(chat_id))
+                        hist.add(media.id)
+                        next_media = await yt.autoplay(
+                            media.id,
+                            hist,
+                            video=getattr(media, "video", False),
+                        )
+                        if next_media:
+                            next_media.file_path = await yt.download(
+                                next_media.id,
+                                video=next_media.video,
+                                title=getattr(next_media, "title", ""),
+                                duration=getattr(next_media, "duration", ""),
+                                duration_sec=getattr(next_media, "duration_sec", 0)
+                            )
+                            if next_media.file_path:
+                                next_media.user = "Autoplay"
+                                next_media.prefetched_for = media.id
+                                queue.set_prefetched_autoplay(chat_id, next_media)
+                    except Exception as e:
+                        logger.warning(f"Autoplay prefetch failed for chat {chat_id}: {e}")
+
+                asyncio.create_task(prefetch_autoplay())
 
         except FileNotFoundError:
             await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
@@ -269,14 +277,19 @@ class TgCall:
                     return
                 else:
                     queue.add_history(chat_id, last_track.id)
-                    media = await yt.autoplay(
-                        last_track.id,
-                        queue.get_history(chat_id),
-                        video=getattr(last_track, "video", False),
-                    )
-                    if media:
-                        media.user = "Autoplay"
+                    prefetched = queue.get_prefetched_autoplay(chat_id)
+                    if prefetched and getattr(prefetched, "prefetched_for", None) == last_track.id and prefetched.file_path:
+                        media = prefetched
                         queue.add(chat_id, media)
+                    else:
+                        media = await yt.autoplay(
+                            last_track.id,
+                            queue.get_history(chat_id),
+                            video=getattr(last_track, "video", False),
+                        )
+                        if media:
+                            media.user = "Autoplay"
+                            queue.add(chat_id, media)
 
             if not media:
                 return await self.stop(chat_id)

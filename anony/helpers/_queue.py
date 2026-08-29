@@ -15,6 +15,7 @@ class Queue:
     def __init__(self):
         self.queues: dict[int, deque[MediaItem]] = defaultdict(deque)
         self.history: dict[int, deque[str]] = defaultdict(lambda: deque(maxlen=20))
+        self.prefetched: dict[int, MediaItem] = {}
 
     def add(self, chat_id: int, item: MediaItem) -> int:
         """Add an item to the queue and return its position (1-based)."""
@@ -76,8 +77,17 @@ class Queue:
         """Return the set of recently played video IDs for a chat."""
         return set(self.history[chat_id])
 
+    def set_prefetched_autoplay(self, chat_id: int, item: MediaItem) -> None:
+        """Store a prefetched autoplay track for a chat."""
+        self.prefetched[chat_id] = item
+
+    def get_prefetched_autoplay(self, chat_id: int) -> MediaItem | None:
+        """Retrieve and remove the prefetched autoplay track for a chat."""
+        return self.prefetched.pop(chat_id, None)
+
     def clear(self, chat_id: int) -> None:
         """Clear the entire queue and its play history."""
         self.queues.pop(chat_id, None)
         self.history.pop(chat_id, None)
+        self.prefetched.pop(chat_id, None)
 
