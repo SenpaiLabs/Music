@@ -195,7 +195,7 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
         remaining = LEADERBOARD_COOLDOWN_SECONDS - (now - last)
         if remaining > 0:
             return await query.answer(
-                query.lang["leaderboard_cooldown"].format(int(remaining) + 1),
+                query.lang["ld_cooldown"].format(int(remaining) + 1),
                 show_alert=True,
             )
         _leaderboard_cooldown[query.from_user.id] = now
@@ -212,7 +212,7 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
         chat_id = int(data[2])
         await query.answer()
         return await query.edit_message_text(
-            text=query.lang["leaderboard_menu"],
+            text=query.lang["ld_menu"],
             reply_markup=buttons.leaderboard_markup(query.lang, chat_id),
         )
 
@@ -220,7 +220,7 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
         chat_id = int(data[2])
         await query.answer()
         return await query.edit_message_text(
-            text=query.lang["leaderboard_choose"],
+            text=query.lang["ld_choose"],
             reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
         )
 
@@ -229,13 +229,13 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
         top = await db.get_top_chats()
         if not top:
             return await query.edit_message_text(
-                text=query.lang["leaderboard_empty"],
+                text=query.lang["ld_empty"],
                 reply_markup=buttons.leaderboard_result_markup(
                     query.lang, query.message.chat.id, groups=True
                 ),
             )
 
-        text = query.lang["leaderboard_groups_title"]
+        text = query.lang["ld_groups_title"]
         for i, entry in enumerate(top, start=1):
             name = entry.get("title")
             if not name:
@@ -243,7 +243,7 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
                     name = (await app.get_chat(entry["_id"])).title
                 except Exception:
                     name = str(entry["_id"])
-            text += query.lang["leaderboard_group_item"].format(i, name, entry["count"])
+            text += query.lang["ld_group_item"].format(i, name, entry["count"])
 
         return await query.edit_message_text(
             text=text,
@@ -258,11 +258,11 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
         top = await db.get_top_users(chat_id, period)
         if not top:
             return await query.edit_message_text(
-                text=query.lang["leaderboard_empty"],
+                text=query.lang["ld_empty"],
                 reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
             )
 
-        text = query.lang[f"leaderboard_{period}_title"]
+        text = query.lang[f"ld_{period}_title"]
         for i, entry in enumerate(top, start=1):
             mention = entry.get("name")
             if not mention:
@@ -271,7 +271,7 @@ async def _leaderboard_cb(_, query: types.CallbackQuery):
                     mention = member.user.mention
                 except Exception:
                     mention = str(entry["_id"])
-            text += query.lang["leaderboard_user_item"].format(i, mention, entry["count"])
+            text += query.lang["ld_user_item"].format(i, mention, entry["count"])
 
         try:
             return await query.edit_message_text(

@@ -63,7 +63,7 @@ class Inline:
                 ]
             ]
         else:
-            cbs = ["admins", "auth", "blist", "lang", "ping", "play", "queue", "stats", "sudo", "tgm"]
+            cbs = ["admins", "auth", "blist", "lang", "ping", "play", "queue", "stats", "sudo", "tgm", "mention"]
             buttons = [
                 self.ikb(text=_lang[f"help_{i}"], callback_data=f"help {cb}")
                 for i, cb in enumerate(cbs)
@@ -76,8 +76,8 @@ class Inline:
         return self.ikm(
             [
                 [
-                    self.ikb(text=_lang["leaderboard_users"], callback_data=f"leaderboard users {chat_id}", style=enums.ButtonStyle.PRIMARY),
-                    self.ikb(text=_lang["leaderboard_groups"], callback_data="leaderboard groups", style=enums.ButtonStyle.PRIMARY),
+                    self.ikb(text=_lang["ld_users"], callback_data=f"leaderboard users {chat_id}", style=enums.ButtonStyle.PRIMARY),
+                    self.ikb(text=_lang["ld_groups"], callback_data="leaderboard groups", style=enums.ButtonStyle.PRIMARY),
                 ]
             ]
         )
@@ -86,9 +86,9 @@ class Inline:
         return self.ikm(
             [
                 [
-                    self.ikb(text=_lang["leaderboard_daily"], callback_data=f"leaderboard period {chat_id} daily"),
-                    self.ikb(text=_lang["leaderboard_weekly"], callback_data=f"leaderboard period {chat_id} weekly"),
-                    self.ikb(text=_lang["leaderboard_overall"], callback_data=f"leaderboard period {chat_id} overall"),
+                    self.ikb(text=_lang["ld_daily"], callback_data=f"leaderboard period {chat_id} daily"),
+                    self.ikb(text=_lang["ld_weekly"], callback_data=f"leaderboard period {chat_id} weekly"),
+                    self.ikb(text=_lang["ld_overall"], callback_data=f"leaderboard period {chat_id} overall"),
                 ],
                 [
                     self.ikb(text=_lang["back"], callback_data=f"leaderboard back {chat_id}", style=enums.ButtonStyle.PRIMARY),
@@ -102,7 +102,7 @@ class Inline:
     ) -> types.InlineKeyboardMarkup:
         rows = []
         if groups:
-            rows.append([self.ikb(text=_lang["leaderboard_support"], url=config.SUPPORT_CHAT)])
+            rows.append([self.ikb(text=_lang["ld_support"], url=config.SUPPORT_CHAT)])
         rows.append(
             [
                 self.ikb(

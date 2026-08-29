@@ -15,7 +15,7 @@ from anony.helpers import buttons
 @lang.language()
 async def _leaderboard(_, m: types.Message):
     await m.reply_text(
-        m.lang["leaderboard_menu"],
+        m.lang["ld_menu"],
         reply_markup=buttons.leaderboard_markup(m.lang, m.chat.id),
     )
 
