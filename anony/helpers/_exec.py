@@ -84,16 +84,4 @@ async def meval(code: str, globs: dict, **kwargs):
 
 def format_exception(exc: BaseException, tb: list[traceback.FrameSummary] | None = None) -> str:
     """Format exception traceback into a readable string."""
-    if tb is None:
-        tb = traceback.extract_tb(exc.__traceback__)
-
-    cwd = os.getcwd()
-    for frame in tb:
-        if cwd in frame.filename:
-            frame.filename = os.path.relpath(frame.filename)
-
-    return (
-        "Traceback (most recent call last):\n"
-        f"{''.join(traceback.format_list(tb))}"
-        f"{type(exc).__name__}{': ' + str(exc) if str(exc) else ''}"
-    )
+    return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))

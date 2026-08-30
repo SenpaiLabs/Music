@@ -9,8 +9,7 @@ from ntgcalls import (ConnectionNotFound, TelegramServerError,
                       RTMPStreamingUnsupported, ConnectionError,
                       TransportParseException)
 from pyrogram import errors
-from pyrogram.errors import (ChatSendMediaForbidden, ChatSendPhotosForbidden,
-                             MessageIdInvalid)
+from pyrogram.errors import MessageIdInvalid
 from pyrogram.raw import functions
 from pyrogram.raw import types as raw_types
 from pyrogram.types import InputMediaPhoto, Message

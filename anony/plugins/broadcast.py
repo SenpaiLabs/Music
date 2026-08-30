@@ -39,59 +39,48 @@ async def _broadcast(_, message: types.Message):
         stats = {"count": 0, "ucount": 0}
         failed_list = []
 
-        queue = asyncio.Queue()
-        for chat in chats:
-            queue.put_nowait(chat)
-
         circuit_breaker = asyncio.Event()
         circuit_breaker.set()
+        semaphore = asyncio.Semaphore(20)
 
-        async def _worker():
+        async def _send(chat):
             while True:
-                try:
-                    chat = queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    break
+                async with semaphore:
+                    await circuit_breaker.wait()
+                    try:
+                        (
+                            await msg.copy(chat, reply_markup=msg.reply_markup)
+                            if copy
+                            else await msg.forward(chat)
+                        )
+                        if chat in groups:
+                            stats["count"] += 1
+                        else:
+                            stats["ucount"] += 1
+                        await asyncio.sleep(0.5)
+                        break
+                    except errors.FloodWait as fw:
+                        circuit_breaker.clear()
+                        await asyncio.sleep(fw.value + 1)
+                        circuit_breaker.set()
+                    except (
+                        errors.UserIsBlocked,
+                        errors.PeerIdInvalid,
+                        errors.InputUserDeactivated,
+                        errors.ChannelInvalid,
+                        errors.ChannelPrivate,
+                    ) as ex:
+                        if chat in groups:
+                            await db.rm_chat(chat)
+                        else:
+                            await db.rm_user(chat)
+                        failed_list.append(f"{chat} - Cleaned from DB: {ex.__class__.__name__}\n")
+                        break
+                    except Exception as ex:
+                        failed_list.append(f"{chat} - {ex.__class__.__name__}: {str(ex)}\n")
+                        break
 
-                await circuit_breaker.wait()
-                try:
-                    (
-                        await msg.copy(chat, reply_markup=msg.reply_markup)
-                        if copy
-                        else await msg.forward(chat)
-                    )
-                    if chat in groups:
-                        stats["count"] += 1
-                    else:
-                        stats["ucount"] += 1
-                    await asyncio.sleep(0.5)
-                except errors.FloodWait as fw:
-                    circuit_breaker.clear()
-                    await asyncio.sleep(fw.value + 1)
-                    circuit_breaker.set()
-                    queue.put_nowait(chat)
-                except (
-                    errors.UserIsBlocked,
-                    errors.PeerIdInvalid,
-                    errors.InputUserDeactivated,
-                    errors.ChannelInvalid,
-                    errors.ChannelPrivate,
-                ) as ex:
-                    if chat in groups:
-                        await db.rm_chat(chat)
-                    else:
-                        await db.rm_user(chat)
-                    failed_list.append(f"{chat} - Cleaned from DB: {ex.__class__.__name__}\n")
-                except Exception as ex:
-                    failed_list.append(f"{chat} - {ex.__class__.__name__}: {str(ex)}\n")
-
-                queue.task_done()
-
-        workers = [asyncio.create_task(_worker()) for _ in range(20)]
-        await queue.join()
-
-        for w in workers:
-            w.cancel()
+        await asyncio.gather(*[_send(chat) for chat in chats])
 
         count = stats["count"]
         ucount = stats["ucount"]

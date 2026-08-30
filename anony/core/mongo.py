@@ -436,43 +436,7 @@ class MongoDB:
         )
 
     # LEADERBOARD METHODS
-    async def add_play(
-        self, chat_id: int, user_id: int, name: str = None, chat_title: str = None
-    ) -> None:
-        now = datetime.now(timezone.utc)
-        day = now.strftime("%Y-%m-%d")
-        week = now.strftime("%G-W%V")
 
-        user_id_str = f"{chat_id}:{user_id}:{day}"
-        if user_id_str not in self._stats_buffer["users"]:
-            self._stats_buffer["users"][user_id_str] = {
-                "count": 0,
-                "set": {
-                    "chat_id": chat_id,
-                    "user_id": user_id,
-                    "day": day,
-                    "week": week,
-                }
-            }
-
-        self._stats_buffer["users"][user_id_str]["count"] += 1
-        if name:
-            self._stats_buffer["users"][user_id_str]["set"]["name"] = name
-
-        chat_id_str = f"{chat_id}:{day}"
-        if chat_id_str not in self._stats_buffer["chats"]:
-            self._stats_buffer["chats"][chat_id_str] = {
-                "count": 0,
-                "set": {
-                    "chat_id": chat_id,
-                    "day": day,
-                    "week": week,
-                }
-            }
-
-        self._stats_buffer["chats"][chat_id_str]["count"] += 1
-        if chat_title:
-            self._stats_buffer["chats"][chat_id_str]["set"]["title"] = chat_title
 
     async def get_top_users(self, chat_id: int, period: str) -> list[dict]:
         match = {"chat_id": chat_id}

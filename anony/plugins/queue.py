@@ -3,6 +3,8 @@
 # This file is part of AnonXMusic
 
 
+import itertools
+
 from pyrogram import filters, types
 
 from anony import app, db, lang, queue
@@ -29,9 +31,7 @@ async def _queue_func(_, m: types.Message):
 
     if _queue:
         _text += "<blockquote expandable>"
-        for i, media in enumerate(_queue, start=1):
-            if i == 15:
-                break
+        for i, media in enumerate(itertools.islice(_queue, 0, 14), start=1):
             _text += m.lang["queue_item"].format(
                 i + 1, media.title, media.duration
             )

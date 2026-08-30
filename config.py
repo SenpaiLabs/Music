@@ -43,10 +43,8 @@ class Config:
         self.START_IMG = getenv("START_IMG", "https://ibb.co/v4tWZdCh")
 
     def check(self):
-        missing = [
-            var
-            for var in ["API_ID", "API_HASH", "BOT_TOKEN", "IMGBB_API_KEY", "MONGO_URL", "LOGGER_ID", "OWNER_ID", "SESSION1", "SONG_CACHE_MONGO_URI"]
-            if not getattr(self, var)
-        ]
-        if missing:
-            raise SystemExit(f"Missing required environment variables: {', '.join(missing)}")
+        assert all([
+            self.API_ID, self.API_HASH, self.BOT_TOKEN, self.IMGBB_API_KEY, 
+            self.MONGO_URL, self.LOGGER_ID, self.OWNER_ID, self.SESSION1, 
+            self.SONG_CACHE_MONGO_URI
+        ]), "Missing required environment variables"

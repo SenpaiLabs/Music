@@ -9,23 +9,15 @@ import time
 import yt_dlp
 import asyncio
 import aiohttp
+import itertools
+import contextlib
 from pathlib import Path
+from difflib import SequenceMatcher
 
 from py_yt import Playlist
 
 from anony import logger
 from anony.helpers import Track, utils
-
-
-class QuietLogger:
-    def debug(self, msg):
-        pass
-
-    def warning(self, msg):
-        pass
-
-    def error(self, msg):
-        pass
 
 
 class YouTube:
@@ -36,7 +28,7 @@ class YouTube:
         self.cookie_dir = "anony/cookies"
         self.warned = False
         self._locks = {}
-        self._cookie_index = 0
+        self._cookie_cycle = None
         self.regex = re.compile(
             r"(https?://)?(www\.|m\.|music\.)?"
             r"(youtube\.com/(watch\?v=|shorts/|playlist\?list=)|youtu\.be/)"
@@ -54,20 +46,14 @@ class YouTube:
                 if file.endswith(".txt"):
                     self.cookies.append(f"{self.cookie_dir}/{file}")
             self.checked = True
+            if self.cookies:
+                self._cookie_cycle = itertools.cycle(self.cookies)
         if not self.cookies:
             if not self.warned:
                 self.warned = True
                 logger.warning("Cookies are missing; downloads might fail.")
             return None
-        cookie = self.cookies[self._cookie_index % len(self.cookies)]
-        self._cookie_index += 1
-        return cookie
-
-    def reload_cookies(self):
-        """Hot reload cookies without restart"""
-        self.cookies.clear()
-        self.checked = False
-        self._cookie_index = 0
+        return next(self._cookie_cycle)
 
     async def save_cookies(self, urls: list[str]) -> None:
         logger.info("Saving cookies from urls...")
@@ -99,7 +85,6 @@ class YouTube:
                     "nocheckcertificate": True,
                     "extract_flat": True,
                     "force_ipv4": True,
-                    "logger": QuietLogger(),
                 }
                 if cookie:
                     opts["cookiefile"] = cookie
@@ -168,7 +153,6 @@ class YouTube:
                     "geo_bypass": True,
                     "nocheckcertificate": True,
                     "force_ipv4": True,
-                    "logger": QuietLogger(),
                     "playlistend": 8,
                 }
                 if cookie:
@@ -182,15 +166,6 @@ class YouTube:
                 logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
                 return None
 
-            def get_title_words(t):
-                t = re.sub(r'\(.*?\)', '', t)
-                t = re.sub(r'\[.*?\]', '', t)
-                t = t.lower()
-                for w in ['official', 'video', 'audio', 'lyric', 'lyrics', 'live', 'music', 'ft', 'feat', 'remix']:
-                    t = t.replace(w, '')
-                t = re.sub(r'[^a-z0-9\s]', '', t)
-                return set(t.split())
-
             # Find the entry matching the current video_id; fall back to the
             # first entry if it isn't present (RD mixes usually place the
             # currently playing video first, but this isn't guaranteed).
@@ -198,7 +173,6 @@ class YouTube:
                 (e.get("title", "") for e in info["entries"] if e.get("id") == video_id),
                 info["entries"][0].get("title", ""),
             )
-            curr_words = get_title_words(current_title) if current_title else set()
 
             next_id = None
             for entry in info["entries"]:
@@ -206,10 +180,9 @@ class YouTube:
                 if vid and vid != video_id and vid not in history:
                     candidate_title = entry.get("title", "")
 
-                    if curr_words:
-                        cand_words = get_title_words(candidate_title)
-                        sim = len(curr_words & cand_words) / len(curr_words | cand_words) if (curr_words or cand_words) else 0
-                        if sim >= 0.55:
+                    if current_title and candidate_title:
+                        sim = SequenceMatcher(None, current_title, candidate_title).ratio()
+                        if sim > 0.55:
                             continue
 
                     next_id = vid
@@ -257,8 +230,8 @@ class YouTube:
                                         return downloaded_path
                             except Exception:
                                 if os.path.exists(filename):
-                                    try: os.remove(filename)
-                                    except Exception: pass
+                                    with contextlib.suppress(OSError):
+                                        os.remove(filename)
 
                             if cache_data.get("msg_id"):
                                 try:
@@ -272,8 +245,8 @@ class YouTube:
                                     logger.warning(f"Cache fallback download failed for {video_id}: {e}")
                                 finally:
                                     if os.path.exists(filename) and os.path.getsize(filename) == 0:
-                                        try: os.remove(filename)
-                                        except Exception: pass
+                                        with contextlib.suppress(OSError):
+                                            os.remove(filename)
                     except Exception as e:
                         logger.warning(f"Cache check failed for {video_id}: {e}")
 
@@ -287,7 +260,6 @@ class YouTube:
                     "overwrites": True,
                     "nocheckcertificate": True,
                     "force_ipv4": True,
-                    "logger": QuietLogger(),
                     "remote_components": ["ejs:github"],
                 }
                 if cookie:

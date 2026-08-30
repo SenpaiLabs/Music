@@ -4,6 +4,7 @@
 
 
 import os
+import contextlib
 
 from pyrogram import enums, types
 
@@ -15,10 +16,8 @@ class Utilities:
         from anony import config
         if config.DB_CHANNEL and media and getattr(media, "file_path", None):
             if os.path.isfile(media.file_path):
-                try:
+                with contextlib.suppress(OSError):
                     os.remove(media.file_path)
-                except Exception:
-                    pass
 
 
     def format_size(self, bytes: int) -> str:
