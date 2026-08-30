@@ -153,7 +153,7 @@ class YouTube:
                     "geo_bypass": True,
                     "nocheckcertificate": True,
                     "force_ipv4": True,
-                    "playlistend": 8,
+                    "playlistend": 15,
                 }
                 if cookie:
                     opts["cookiefile"] = cookie

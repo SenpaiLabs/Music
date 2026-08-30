@@ -225,5 +225,12 @@
     "m_unmuted": "Voix rétablie pour {0}.",
     "m_banned": "{0} banni.",
     "m_unbanned": "{0} débanni.",
-    "m_staff_title": "Administrateurs:\n"
+    "m_staff_title": "Administrateurs:\n",
+    "m_bot_not_admin": "Le bot n'est pas administrateur dans {}",
+    "m_cant_ban_admin": "Vous ne pouvez pas bannir un administrateur.",
+    "m_cant_mute_admin": "Vous ne pouvez pas rendre muet un administrateur.",
+    "m_fail_ban": "Échec du bannissement : {}",
+    "m_fail_unban": "Échec de l'annulation du bannissement : {}",
+    "m_fail_mute": "Échec de la mise en sourdine : {}",
+    "m_fail_unmute": "Échec de l'annulation de la mise en sourdine : {}"
 }

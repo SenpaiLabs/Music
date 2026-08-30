@@ -225,5 +225,12 @@
     "m_unmuted": "{0} のミュートを解除しました。",
     "m_banned": "{0} をBANしました。",
     "m_unbanned": "{0} のBANを解除しました。",
-    "m_staff_title": "管理者:\n"
+    "m_staff_title": "管理者:\n",
+    "m_bot_not_admin": "ボットは {} の管理者ではありません",
+    "m_cant_ban_admin": "管理者をBANすることはできません。",
+    "m_cant_mute_admin": "管理者をミュートすることはできません。",
+    "m_fail_ban": "BANに失敗しました: {}",
+    "m_fail_unban": "BAN解除に失敗しました: {}",
+    "m_fail_mute": "ミュートに失敗しました: {}",
+    "m_fail_unmute": "ミュート解除に失敗しました: {}"
 }

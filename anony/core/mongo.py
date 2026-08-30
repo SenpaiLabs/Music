@@ -385,8 +385,7 @@ class MongoDB:
 
     async def get_logger(self) -> bool:
         doc = await self.cache.find_one({"_id": "logger"})
-        if doc:
-            self.logger = doc["status"]
+        self.logger = doc["status"] if doc else True
         return self.logger
 
     async def set_logger(self, status: bool) -> None:

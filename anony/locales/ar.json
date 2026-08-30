@@ -225,5 +225,12 @@
     "m_unmuted": "تم إلغاء كتم {0}.",
     "m_banned": "تم حظر {0}.",
     "m_unbanned": "تم إلغاء حظر {0}.",
-    "m_staff_title": "المشرفين:\n"
+    "m_staff_title": "المشرفين:\n",
+    "m_bot_not_admin": "البوت ليس مشرفًا في {}",
+    "m_cant_ban_admin": "لا يمكنك حظر مشرف.",
+    "m_cant_mute_admin": "لا يمكنك كتم مشرف.",
+    "m_fail_ban": "فشل الحظر: {}",
+    "m_fail_unban": "فشل إلغاء الحظر: {}",
+    "m_fail_mute": "فشل الكتم: {}",
+    "m_fail_unmute": "فشل إلغاء الكتم: {}"
 }

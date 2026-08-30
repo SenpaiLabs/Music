@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pyrogram import filters, types
+from pyrogram.errors import ChatAdminRequired, UserAdminInvalid
 from anony import app, lang
 from anony.helpers import admin_check
 
@@ -33,8 +34,15 @@ async def mute_usr(_, message: types.Message):
     if not user:
         return await message.reply_text(message.lang["m_invalid_target"])
         
-    await message.chat.restrict_member(user.id, types.ChatPermissions())
-    await message.reply_text(message.lang["m_muted_perm"].format(user.mention))
+    try:
+        await message.chat.restrict_member(user.id, types.ChatPermissions())
+        await message.reply_text(message.lang["m_muted_perm"].format(user.mention))
+    except ChatAdminRequired:
+        await message.reply_text(message.lang["m_bot_not_admin"].format(message.chat.title))
+    except UserAdminInvalid:
+        await message.reply_text(message.lang["m_cant_mute_admin"])
+    except Exception as e:
+        await message.reply_text(message.lang["m_fail_mute"].format(e))
 
 @app.on_message(filters.command("tmute") & filters.group)
 @lang.language()
@@ -51,12 +59,19 @@ async def tmute_usr(_, message: types.Message):
     if not user:
         return await message.reply_text(message.lang["m_invalid_target"])
         
-    await message.chat.restrict_member(
-        user.id, 
-        types.ChatPermissions(),
-        until_date=until_date
-    )
-    await message.reply_text(message.lang["m_muted_temp"].format(user.mention, message.command[1]))
+    try:
+        await message.chat.restrict_member(
+            user.id, 
+            types.ChatPermissions(),
+            until_date=until_date
+        )
+        await message.reply_text(message.lang["m_muted_temp"].format(user.mention, message.command[1]))
+    except ChatAdminRequired:
+        await message.reply_text(message.lang["m_bot_not_admin"].format(message.chat.title))
+    except UserAdminInvalid:
+        await message.reply_text(message.lang["m_cant_mute_admin"])
+    except Exception as e:
+        await message.reply_text(message.lang["m_fail_mute"].format(e))
 
 @app.on_message(filters.command("unmute") & filters.group)
 @lang.language()
@@ -66,5 +81,10 @@ async def unmute_usr(_, message: types.Message):
     if not user:
         return await message.reply_text(message.lang["m_invalid_target"])
         
-    await message.chat.unban_member(user.id)
-    await message.reply_text(message.lang["m_unmuted"].format(user.mention))
+    try:
+        await message.chat.unban_member(user.id)
+        await message.reply_text(message.lang["m_unmuted"].format(user.mention))
+    except ChatAdminRequired:
+        await message.reply_text(message.lang["m_bot_not_admin"].format(message.chat.title))
+    except Exception as e:
+        await message.reply_text(message.lang["m_fail_unmute"].format(e))

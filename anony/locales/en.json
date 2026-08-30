@@ -225,5 +225,12 @@
     "m_unmuted": "Unmuted {0}.",
     "m_banned": "Banned {0}.",
     "m_unbanned": "Unbanned {0}.",
-    "m_staff_title": "Admins:\n"
+    "m_staff_title": "Admins:\n",
+    "m_bot_not_admin": "bot not are admin in {}",
+    "m_cant_ban_admin": "You cannot ban an admin.",
+    "m_cant_mute_admin": "You cannot mute an admin.",
+    "m_fail_ban": "Failed to ban: {}",
+    "m_fail_unban": "Failed to unban: {}",
+    "m_fail_mute": "Failed to mute: {}",
+    "m_fail_unmute": "Failed to unmute: {}"
 }

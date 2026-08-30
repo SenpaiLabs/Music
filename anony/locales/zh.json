@@ -225,5 +225,12 @@
     "m_unmuted": "已解除 {0} 的禁言。",
     "m_banned": "已封禁 {0}。",
     "m_unbanned": "已解封 {0}。",
-    "m_staff_title": "管理员:\n"
+    "m_staff_title": "管理员:\n",
+    "m_bot_not_admin": "机器人在 {} 中不是管理员",
+    "m_cant_ban_admin": "您不能封禁管理员。",
+    "m_cant_mute_admin": "您不能禁言管理员。",
+    "m_fail_ban": "封禁失败: {}",
+    "m_fail_unban": "解除封禁失败: {}",
+    "m_fail_mute": "禁言失败: {}",
+    "m_fail_unmute": "解除禁言失败: {}"
 }

@@ -225,5 +225,12 @@
     "m_unmuted": "Se anuló el silencio a {0}.",
     "m_banned": "Baneado {0}.",
     "m_unbanned": "Desbaneado {0}.",
-    "m_staff_title": "Administradores:\n"
+    "m_staff_title": "Administradores:\n",
+    "m_bot_not_admin": "El bot no es administrador en {}",
+    "m_cant_ban_admin": "No puedes banear a un administrador.",
+    "m_cant_mute_admin": "No puedes silenciar a un administrador.",
+    "m_fail_ban": "Error al banear: {}",
+    "m_fail_unban": "Error al desbanear: {}",
+    "m_fail_mute": "Error al silenciar: {}",
+    "m_fail_unmute": "Error al quitar el silencio: {}"
 }

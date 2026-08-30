@@ -225,5 +225,12 @@
     "m_unmuted": "Stummschaltung für {0} aufgehoben.",
     "m_banned": "{0} wurde gebannt.",
     "m_unbanned": "Bann für {0} aufgehoben.",
-    "m_staff_title": "Administratoren:\n"
+    "m_staff_title": "Administratoren:\n",
+    "m_bot_not_admin": "Der Bot ist kein Administrator in {}",
+    "m_cant_ban_admin": "Du kannst keinen Administrator bannen.",
+    "m_cant_mute_admin": "Du kannst keinen Administrator stummschalten.",
+    "m_fail_ban": "Bannen fehlgeschlagen: {}",
+    "m_fail_unban": "Entbannen fehlgeschlagen: {}",
+    "m_fail_mute": "Stummschalten fehlgeschlagen: {}",
+    "m_fail_unmute": "Aufheben der Stummschaltung fehlgeschlagen: {}"
 }

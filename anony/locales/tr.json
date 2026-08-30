@@ -225,5 +225,12 @@
     "m_unmuted": "{0} susturması kaldırıldı.",
     "m_banned": "{0} yasaklandı.",
     "m_unbanned": "{0} yasaklaması kaldırıldı.",
-    "m_staff_title": "Yöneticiler:\n"
+    "m_staff_title": "Yöneticiler:\n",
+    "m_bot_not_admin": "Bot {} grubunda yönetici değil",
+    "m_cant_ban_admin": "Bir yöneticiyi banlayamazsınız.",
+    "m_cant_mute_admin": "Bir yöneticiyi susturamazsınız.",
+    "m_fail_ban": "Banlanamadı: {}",
+    "m_fail_unban": "Ban açılamadı: {}",
+    "m_fail_mute": "Susturulamadı: {}",
+    "m_fail_unmute": "Susturma açılamadı: {}"
 }
