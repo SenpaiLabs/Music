@@ -190,7 +190,7 @@ requires-dist = [
     { name = "aiohttp", specifier = "~=3.14.3" },
     { name = "cachetools", specifier = ">=7.1.7,<7.2.0" },
     { name = "kurigram", specifier = ">=2.2.25" },
-    { name = "ntgcalls", specifier = "~=3.0b16" },
+    { name = "ntgcalls", specifier = ">=3.0.0b20" },
     { name = "pillow", specifier = "~=12.3.0" },
     { name = "psutil", specifier = "~=7.2.2" },
     { name = "py-tgcalls", specifier = "~=3.0.0.dev5" },
