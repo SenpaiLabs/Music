@@ -212,8 +212,7 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
                 )
                 await app.send_message(config.LOGGER_ID, log_text)
             except Exception as e:
-                from anony import logger
-                logger.warning(f"Failed to send purge audit log to LOGGER_ID ({config.LOGGER_ID}). Reason: {format_exception(e)}")
+                pass
 
     except ChatAdminRequired:
         await progress.edit_text(message.lang["purge_admin_req"])

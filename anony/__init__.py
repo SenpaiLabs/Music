@@ -69,9 +69,7 @@ async def _graceful(coro, name: str, timeout: float = 5) -> None:
     except asyncio.TimeoutError:
         pass
     except Exception as exc:
-        logger.warning(f"Error in {name}: {exc}")
-
-
+        pass
 async def stop() -> None:
     logger.info("Stopping...")
     for task in tasks:

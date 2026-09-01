@@ -93,7 +93,7 @@ def checkUB(play):
                         await client.join_chat(invite_link)
                         break
                     except errors.FloodWait as fw:
-                        logger.warning(f"FloodWait on userbot join: sleeping {fw.value}s")
+                        pass
                         await asyncio.sleep(fw.value + 1)
                     except errors.UserAlreadyParticipant:
                         break

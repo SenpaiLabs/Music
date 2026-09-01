@@ -65,7 +65,7 @@ class TgCall:
     async def _skip_or_stop(self, chat_id, message, text, attempt):
         await message.edit_text(text)
         if attempt >= self.MAX_SKIP_ATTEMPTS:
-            logger.warning(f"Too many consecutive failures in {chat_id}, stopping.")
+            pass
             return await self.stop(chat_id)
         return await self.play_next(chat_id, attempt=attempt + 1)
 
@@ -103,7 +103,7 @@ class TgCall:
                     config=types.GroupCallConfig(auto_start=False),
                 )
             except errors.FloodWait as fw:
-                logger.warning(f"FloodWait on JoinGroupCall: sleeping {fw.value}s (chat {chat_id})")
+                pass
                 await asyncio.sleep(fw.value)
                 await client.play(
                     chat_id=chat_id,
@@ -164,14 +164,13 @@ class TgCall:
                                 next_media.prefetched_for = media.id
                                 queue.set_prefetched_autoplay(chat_id, next_media)
                     except Exception as e:
-                        logger.warning(f"Autoplay prefetch failed for chat {chat_id}: {e}")
-
+                        pass
                 asyncio.create_task(prefetch_autoplay())
 
         except FileNotFoundError:
             await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
         except ProcessLookupError as ex:
-            logger.warning(f"Stream probe failed for {media.file_path}: {ex}")
+            pass
             await self._skip_or_stop(chat_id, message, _lang["error_no_file"].format(config.SUPPORT_CHAT), attempt)
         except exceptions.NoActiveGroupCall:
             await self.stop(chat_id)
@@ -262,8 +261,7 @@ class TgCall:
                 )
                 media.message_id = 0
         except Exception as e:
-            logger.warning(f"Failed to delete message in {chat_id}: {e}")
-
+            pass
         if not media:
             if last_track and await db.get_autoplay(chat_id):
                 if await self.is_vc_empty(chat_id):

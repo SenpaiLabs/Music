@@ -51,7 +51,7 @@ class YouTube:
         if not self.cookies:
             if not self.warned:
                 self.warned = True
-                logger.warning("Cookies are missing; downloads might fail.")
+                pass
             return None
         return next(self._cookie_cycle)
 
@@ -80,6 +80,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "noplaylist": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
@@ -117,7 +118,7 @@ class YouTube:
                 video=video,
             )
         except Exception as e:
-            logger.warning(f"Search failed for {query}: {e}")
+            pass
             return None
 
     async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
@@ -149,6 +150,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "extract_flat": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
@@ -163,7 +165,7 @@ class YouTube:
 
             info = await asyncio.to_thread(_extract_mix)
             if not info or "entries" not in info or not info["entries"]:
-                logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
+                pass
                 return None
 
             # Find the entry matching the current video_id; fall back to the
@@ -189,14 +191,14 @@ class YouTube:
                     break
 
             if not next_id:
-                logger.warning("Autoplay exhausted: No valid tracks found in RD mix.")
+                pass
                 return None
 
             track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
             return track
 
         except Exception as e:
-            logger.warning(f"Autoplay fetch failed: {e}")
+            pass
             return None
 
 
@@ -242,14 +244,13 @@ class YouTube:
                                             await db.increment_play_count(video_id, video)
                                             return downloaded_path
                                 except Exception as e:
-                                    logger.warning(f"Cache fallback download failed for {video_id}: {e}")
+                                    pass
                                 finally:
                                     if os.path.exists(filename) and os.path.getsize(filename) == 0:
                                         with contextlib.suppress(OSError):
                                             os.remove(filename)
                     except Exception as e:
-                        logger.warning(f"Cache check failed for {video_id}: {e}")
-
+                        pass
                 cookie = self.get_cookies()
                 base_opts = {
                     "outtmpl": f"{os.path.abspath('downloads')}/%(id)s.%(ext)s",
@@ -282,17 +283,17 @@ class YouTube:
                         try:
                             ydl.download([url])
                         except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError) as e:
-                            logger.warning(f"yt-dlp error for {url}: {e}")
+                            pass
                             return None
                         except Exception as ex:
-                            logger.warning("Download failed: %s", ex)
+                            pass
                             return None
                     return filename
 
                 result_filename = await asyncio.to_thread(_download)
 
                 if not result_filename or not Path(filename).exists():
-                    logger.warning(f"Download failed for {video_id}")
+                    pass
                     if Path(filename).exists():
                         Path(filename).unlink()
                     return None
@@ -309,7 +310,7 @@ class YouTube:
                             if sent:
                                 media = sent.video or sent.audio or sent.voice or sent.document
                                 if not media:
-                                    logger.warning(f"Failed to find media attribute in sent message for {video_id}")
+                                    pass
                                     return
 
                                 file_id = getattr(media, "file_id", None)
@@ -318,8 +319,7 @@ class YouTube:
                                         video_id, video, sent.id, file_id, title, duration, duration_sec
                                     )
                         except Exception as e:
-                            logger.warning(f"Background cache upload failed for {video_id}: {e}")
-
+                            pass
                     bg_task = asyncio.create_task(_upload_to_cache())
                     from anony import tasks
                     tasks.append(bg_task)
