@@ -80,6 +80,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "noplaylist": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
@@ -149,6 +150,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "extract_flat": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
