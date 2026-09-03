@@ -10,11 +10,9 @@ import yt_dlp
 import asyncio
 import aiohttp
 import itertools
-import contextlib
 from pathlib import Path
 from difflib import SequenceMatcher
 
-from py_yt import Playlist
 
 from anony import logger
 from anony.helpers import Track, utils
@@ -26,7 +24,6 @@ class YouTube:
         self.cookies = []
         self.checked = False
         self.cookie_dir = "anony/cookies"
-        self.warned = False
         self._locks = {}
         self._cookie_cycle = None
         self.regex = re.compile(
@@ -42,16 +39,11 @@ class YouTube:
 
     def get_cookies(self):
         if not self.checked:
-            for file in os.listdir(self.cookie_dir):
-                if file.endswith(".txt"):
-                    self.cookies.append(f"{self.cookie_dir}/{file}")
+            self.cookies = [str(p) for p in Path(self.cookie_dir).glob("*.txt")]
             self.checked = True
             if self.cookies:
                 self._cookie_cycle = itertools.cycle(self.cookies)
         if not self.cookies:
-            if not self.warned:
-                self.warned = True
-                logger.warning("Cookies are missing; downloads might fail.")
             return None
         return next(self._cookie_cycle)
 
@@ -63,8 +55,7 @@ class YouTube:
                 link = "https://batbin.me/raw/" + name
                 async with session.get(link) as resp:
                     resp.raise_for_status()
-                    with open(f"{self.cookie_dir}/{name}.txt", "wb") as fw:
-                        fw.write(await resp.read())
+                    Path(f"{self.cookie_dir}/{name}.txt").write_bytes(await resp.read())
         logger.info(f"Cookies saved in {self.cookie_dir}.")
 
     def valid(self, url: str) -> bool:
@@ -80,6 +71,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "noplaylist": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
@@ -116,25 +108,39 @@ class YouTube:
                 view_count=str(data.get("view_count", "")),
                 video=video,
             )
-        except Exception as e:
-            logger.warning(f"Search failed for {query}: {e}")
+        except Exception:
             return None
 
     async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
         tracks = []
         try:
-            plist = await Playlist.get(url)
-            for data in plist["videos"][:limit]:
+            def _extract():
+                cookie = self.get_cookies()
+                opts = {"extract_flat": True, "playlistend": limit, "quiet": True}
+                if cookie:
+                    opts["cookiefile"] = cookie
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(url, download=False)
+
+            info = await asyncio.to_thread(_extract)
+            if not info or "entries" not in info:
+                return tracks
+
+            for data in info["entries"][:limit]:
+                if not data:
+                    continue
+                vid = data.get("id")
+                dur = int(data.get("duration") or 0)
                 track = Track(
-                    id=data.get("id"),
-                    channel_name=data.get("channel", {}).get("name", ""),
-                    duration=data.get("duration"),
-                    duration_sec=sum(int(x) * 60**i for i, x in enumerate(reversed(str(data.get("duration") or "0").split(":")))),
-                    title=data.get("title")[:25],
-                    thumbnail=data.get("thumbnails")[-1].get("url").split("?")[0],
-                    url=data.get("link").split("&list=")[0],
+                    id=vid,
+                    channel_name=data.get("uploader") or "",
+                    duration=time.strftime("%M:%S", time.gmtime(dur)),
+                    duration_sec=dur,
+                    title=data.get("title", "")[:25],
+                    thumbnail=data.get("thumbnail", "").split("?")[0] if data.get("thumbnail") else "",
+                    url=self.base + vid if vid else "",
                     user=user,
-                    view_count="",
+                    view_count=str(data.get("view_count", "")),
                     video=video,
                 )
                 tracks.append(track)
@@ -149,6 +155,7 @@ class YouTube:
                 opts = {
                     "format": "bestaudio",
                     "quiet": True,
+                    "no_warnings": True,
                     "extract_flat": True,
                     "geo_bypass": True,
                     "nocheckcertificate": True,
@@ -163,7 +170,6 @@ class YouTube:
 
             info = await asyncio.to_thread(_extract_mix)
             if not info or "entries" not in info or not info["entries"]:
-                logger.warning("Autoplay exhausted: No new tracks found in RD mix.")
                 return None
 
             # Find the entry matching the current video_id; fall back to the
@@ -189,17 +195,12 @@ class YouTube:
                     break
 
             if not next_id:
-                logger.warning("Autoplay exhausted: No valid tracks found in RD mix.")
                 return None
 
-            track = await self.search(f"https://www.youtube.com/watch?v={next_id}", 0, video)
-            return track
+            return await self.search(self.base + next_id, 0, video)
 
-        except Exception as e:
-            logger.warning(f"Autoplay fetch failed: {e}")
+        except Exception:
             return None
-
-
 
     async def download(
         self, video_id: str, video: bool = False, title: str = "", duration: str = "", duration_sec: int = 0
@@ -208,15 +209,12 @@ class YouTube:
         ext = "mp4" if video else "webm"
         filename = os.path.abspath(f"downloads/{video_id}.{ext}")
 
-        if video_id not in self._locks:
-            self._locks[video_id] = asyncio.Lock()
-
-        async with self._locks[video_id]:
+        async with self._locks.setdefault(video_id, asyncio.Lock()):
             try:
                 if Path(filename).exists() and os.path.getsize(filename) > 0:
                     return filename
 
-                from anony import app, config, db
+                from anony import app, config, db, tasks
 
                 if config.DB_CHANNEL:
                     try:
@@ -229,27 +227,23 @@ class YouTube:
                                         await db.increment_play_count(video_id, video)
                                         return downloaded_path
                             except Exception:
-                                if os.path.exists(filename):
-                                    with contextlib.suppress(OSError):
-                                        os.remove(filename)
+                                Path(filename).unlink(missing_ok=True)
 
                             if cache_data.get("msg_id"):
                                 try:
                                     msg = await app.get_messages(config.DB_CHANNEL, cache_data["msg_id"])
-                                    if msg and (getattr(msg, "audio", None) or getattr(msg, "video", None) or getattr(msg, "document", None) or getattr(msg, "voice", None)):
+                                    if msg and any(getattr(msg, a, None) for a in ("audio", "video", "document", "voice")):
                                         downloaded_path = await app.download_media(msg, file_name=filename)
                                         if downloaded_path and os.path.getsize(downloaded_path) > 0:
                                             await db.increment_play_count(video_id, video)
                                             return downloaded_path
-                                except Exception as e:
-                                    logger.warning(f"Cache fallback download failed for {video_id}: {e}")
+                                except Exception:
+                                    pass
                                 finally:
                                     if os.path.exists(filename) and os.path.getsize(filename) == 0:
-                                        with contextlib.suppress(OSError):
-                                            os.remove(filename)
-                    except Exception as e:
-                        logger.warning(f"Cache check failed for {video_id}: {e}")
-
+                                        Path(filename).unlink(missing_ok=True)
+                    except Exception:
+                        pass
                 cookie = self.get_cookies()
                 base_opts = {
                     "outtmpl": f"{os.path.abspath('downloads')}/%(id)s.%(ext)s",
@@ -268,33 +262,34 @@ class YouTube:
                 if video:
                     ydl_opts = {
                         **base_opts,
-                        "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]",
+                        "format": "(bestvideo[height<=?720][width<=?1280][ext=mp4])+(bestaudio)/best[height<=?720]/best",
                         "merge_output_format": "mp4",
                     }
                 else:
                     ydl_opts = {
                         **base_opts,
-                        "format": "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
+                        "format": "bestaudio[ext=webm][acodec=opus]/bestaudio[ext=m4a]/bestaudio/best",
                     }
 
                 def _download():
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         try:
                             ydl.download([url])
-                        except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError) as e:
-                            logger.warning(f"yt-dlp error for {url}: {e}")
+                        except (yt_dlp.utils.DownloadError, yt_dlp.utils.ExtractorError):
                             return None
-                        except Exception as ex:
-                            logger.warning("Download failed: %s", ex)
+                        except Exception:
                             return None
-                    return filename
+                    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+                        return filename
+                    return next(
+                        (str(p) for p in Path("downloads").glob(f"{video_id}.*") if p.is_file() and p.stat().st_size > 0),
+                        None,
+                    )
 
                 result_filename = await asyncio.to_thread(_download)
 
-                if not result_filename or not Path(filename).exists():
-                    logger.warning(f"Download failed for {video_id}")
-                    if Path(filename).exists():
-                        Path(filename).unlink()
+                if not result_filename or not os.path.exists(result_filename):
+                    Path(filename).unlink(missing_ok=True)
                     return None
 
                 if result_filename and config.DB_CHANNEL:
@@ -309,7 +304,6 @@ class YouTube:
                             if sent:
                                 media = sent.video or sent.audio or sent.voice or sent.document
                                 if not media:
-                                    logger.warning(f"Failed to find media attribute in sent message for {video_id}")
                                     return
 
                                 file_id = getattr(media, "file_id", None)
@@ -317,11 +311,9 @@ class YouTube:
                                     await db.save_song_cache(
                                         video_id, video, sent.id, file_id, title, duration, duration_sec
                                     )
-                        except Exception as e:
-                            logger.warning(f"Background cache upload failed for {video_id}: {e}")
-
+                        except Exception:
+                            pass
                     bg_task = asyncio.create_task(_upload_to_cache())
-                    from anony import tasks
                     tasks.append(bg_task)
 
                 return result_filename

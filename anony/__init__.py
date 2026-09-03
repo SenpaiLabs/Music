@@ -6,6 +6,7 @@
 import time
 import asyncio
 import logging
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 logging.basicConfig(
@@ -37,8 +38,9 @@ boot = time.time()
 from anony.core.bot import Bot
 app = Bot()
 
-from anony.core.dir import ensure_dirs
-ensure_dirs()
+for d in ("cache", "downloads"):
+    Path(d).mkdir(parents=True, exist_ok=True)
+logger.info("Cache directories updated.")
 
 from anony.core.userbot import Userbot
 userbot = Userbot()
@@ -63,13 +65,11 @@ anon = TgCall()
 from anony.helpers import progress_manager
 
 
-async def _graceful(coro, name: str, timeout: float = 5) -> None:
+async def _graceful(coro, timeout: float = 5) -> None:
     try:
         await asyncio.wait_for(coro, timeout=timeout)
-    except asyncio.TimeoutError:
+    except Exception:
         pass
-    except Exception as exc:
-        logger.warning(f"Error in {name}: {exc}")
 
 
 async def stop() -> None:
@@ -80,10 +80,9 @@ async def stop() -> None:
         except Exception:
             continue
 
-    await _graceful(progress_manager.stop_workers(), "progress_manager.stop")
-    await _graceful(app.exit(), "app.exit")
-    await _graceful(userbot.exit(), "userbot.exit")
-    await _graceful(db.close(), "db.close")
+    await _graceful(progress_manager.stop_workers())
+    await _graceful(app.exit())
+    await _graceful(userbot.exit())
+    await _graceful(db.close())
 
     logger.info("Stopped.\n")
-

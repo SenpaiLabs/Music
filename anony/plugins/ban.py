@@ -1,22 +1,12 @@
 from pyrogram import filters, types
 from pyrogram.errors import ChatAdminRequired, UserAdminInvalid
 from anony import app, lang
-
-async def extract_target(message: types.Message, arg_idx: int = 1):
-    if message.reply_to_message:
-        return message.reply_to_message.from_user
-    if len(message.command) > arg_idx:
-        arg = message.command[arg_idx]
-        try:
-            return await app.get_users(int(arg) if arg.isdigit() else arg)
-        except:
-            pass
-    return None
+from anony.helpers import extract_user
 
 @app.on_message(filters.command("ban") & filters.group)
 @lang.language()
 async def ban_usr(_, message: types.Message):
-    user = await extract_target(message)
+    user = await extract_user(message)
     if not user:
         return await message.reply_text(message.lang["m_invalid_target"])
     try:
@@ -32,7 +22,7 @@ async def ban_usr(_, message: types.Message):
 @app.on_message(filters.command("unban") & filters.group)
 @lang.language()
 async def unban_usr(_, message: types.Message):
-    user = await extract_target(message)
+    user = await extract_user(message)
     if not user:
         return await message.reply_text(message.lang["m_invalid_target"])
     try:

@@ -3,6 +3,7 @@
 # This file is part of AnonXMusic
 
 
+import types
 from pyrogram import Client
 
 from anony import config, logger
@@ -10,37 +11,29 @@ from anony import config, logger
 
 class Userbot:
     def __init__(self):
-        """
-        Initializes the userbot with multiple clients.
+        self.clients: list[Client] = []
+        self._dummy = types.SimpleNamespace(on_raw_update=lambda *a, **k: lambda f: f)
 
-        This method sets up clients for the userbot using predefined session strings.
-        Each client is assigned a unique name based on the key in the `clients` dictionary.
-        """
-        self.clients = []
-        clients = {"one": "SESSION1", "two": "SESSION2", "three": "SESSION3"}
-        for key, string_key in clients.items():
-            name = f"AnonyUB{key[-1]}"
-            session = getattr(config, string_key)
-            setattr(
-                self,
-                key,
-                Client(
-                    name=name,
-                    api_id=config.API_ID,
-                    api_hash=config.API_HASH,
-                    session_string=session,
-                ),
-            )
+    @property
+    def one(self):
+        return self.clients[0] if len(self.clients) > 0 else self._dummy
 
-    async def boot_client(self, num: int, client: Client):
-        """
-        Boot a client and perform initial setup.
-        Args:
-            num (int): The client number to boot (1, 2, or 3).
-            client (Client): The userbot client instance.
-        Raises:
-            SystemExit: If the client fails to send a message in the log group.
-        """
+    @property
+    def two(self):
+        return self.clients[1] if len(self.clients) > 1 else self._dummy
+
+    @property
+    def three(self):
+        return self.clients[2] if len(self.clients) > 2 else self._dummy
+
+    async def boot_client(self, num: int, session: str):
+        """Boot an assistant client and perform initial setup."""
+        client = Client(
+            name=f"AnonyUB{num}",
+            api_id=config.API_ID,
+            api_hash=config.API_HASH,
+            session_string=session,
+        )
         await client.start()
         try:
             await client.send_message(config.LOGGER_ID, "Assistant Started")
@@ -52,16 +45,13 @@ class Userbot:
         client.username = client.me.username
         client.mention = client.me.mention
         self.clients.append(client)
-        try:
-            await client.join_chat("fallenx")
-        except Exception:
-            pass
         logger.info(f"Assistant {num} started as @{client.username}")
 
     async def boot(self):
-        for i, client in enumerate([self.one, self.two, self.three], 1):
-            if getattr(config, f"SESSION{i}"):
-                await self.boot_client(i, client)
+        for i in (1, 2, 3):
+            session = getattr(config, f"SESSION{i}")
+            if session:
+                await self.boot_client(i, session)
 
     async def exit(self):
         for client in self.clients:

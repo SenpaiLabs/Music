@@ -44,7 +44,7 @@ class Config:
 
     def check(self):
         assert all([
-            self.API_ID, self.API_HASH, self.BOT_TOKEN, self.IMGBB_API_KEY, 
+            self.API_ID, self.API_HASH, self.BOT_TOKEN,
             self.MONGO_URL, self.LOGGER_ID, self.OWNER_ID, self.SESSION1, 
             self.SONG_CACHE_MONGO_URI
         ]), "Missing required environment variables"

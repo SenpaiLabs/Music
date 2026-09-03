@@ -12,8 +12,6 @@ from anony import anon, app, db, lang, queue, tg, yt
 from anony.helpers import admin_check, buttons, can_manage_vc
 
 
-_leaderboard_cooldown: dict[int, float] = {}
-LEADERBOARD_COOLDOWN_SECONDS = 3
 
 
 @app.on_callback_query(filters.regex("cancel_dl") & ~app.bl_users)
@@ -182,108 +180,6 @@ async def _help(_, query: types.CallbackQuery):
         reply_markup=buttons.help_markup(query.lang, True),
     )
 
-
-@app.on_callback_query(filters.regex("leaderboard") & ~app.bl_users)
-@lang.language()
-async def _leaderboard_cb(_, query: types.CallbackQuery):
-    data = query.data.split()
-    action = data[1]
-
-    if action not in ("close", "back"):
-        now = time()
-        last = _leaderboard_cooldown.get(query.from_user.id, 0)
-        remaining = LEADERBOARD_COOLDOWN_SECONDS - (now - last)
-        if remaining > 0:
-            return await query.answer(
-                query.lang["ld_cooldown"].format(int(remaining) + 1),
-                show_alert=True,
-            )
-        _leaderboard_cooldown[query.from_user.id] = now
-
-    if action == "close":
-        await query.answer()
-        try:
-            await query.message.delete()
-        except Exception:
-            pass
-        return
-
-    if action == "back":
-        chat_id = int(data[2])
-        await query.answer()
-        return await query.edit_message_text(
-            text=query.lang["ld_menu"],
-            reply_markup=buttons.leaderboard_markup(query.lang, chat_id),
-        )
-
-    if action == "users":
-        chat_id = int(data[2])
-        await query.answer()
-        return await query.edit_message_text(
-            text=query.lang["ld_choose"],
-            reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
-        )
-
-    if action == "groups":
-        await query.answer(query.lang["processing"])
-        top = await db.get_top_chats()
-        if not top:
-            return await query.edit_message_text(
-                text=query.lang["ld_empty"],
-                reply_markup=buttons.leaderboard_result_markup(
-                    query.lang, query.message.chat.id, groups=True
-                ),
-            )
-
-        text = query.lang["ld_groups_title"]
-        for i, entry in enumerate(top, start=1):
-            name = entry.get("title")
-            if not name:
-                try:
-                    name = (await app.get_chat(entry["_id"])).title
-                except Exception:
-                    name = str(entry["_id"])
-            text += query.lang["ld_group_item"].format(i, name, entry["count"])
-
-        return await query.edit_message_text(
-            text=text,
-            reply_markup=buttons.leaderboard_result_markup(
-                query.lang, query.message.chat.id, groups=True
-            ),
-        )
-
-    if action == "period":
-        chat_id, period = int(data[2]), data[3]
-        await query.answer(query.lang["processing"])
-        top = await db.get_top_users(chat_id, period)
-        if not top:
-            return await query.edit_message_text(
-                text=query.lang["ld_empty"],
-                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
-            )
-
-        text = query.lang[f"ld_{period}_title"]
-        for i, entry in enumerate(top, start=1):
-            mention = entry.get("name")
-            if not mention:
-                try:
-                    member = await app.get_chat_member(chat_id, entry["_id"])
-                    mention = member.user.mention
-                except Exception:
-                    mention = str(entry["_id"])
-            text += query.lang["ld_user_item"].format(i, mention, entry["count"])
-
-        try:
-            return await query.edit_message_text(
-                text=text,
-                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
-            )
-        except errors.RPCError:
-            safe_text = text.replace("tg://openmessage?user_id=", "tg://user?id=")
-            return await query.edit_message_text(
-                text=safe_text,
-                reply_markup=buttons.leaderboard_period_markup(query.lang, chat_id),
-            )
 
 
 @app.on_callback_query(filters.regex("settings") & ~app.bl_users)

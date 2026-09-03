@@ -6,4 +6,5 @@ async def purge_msgs(_, message: types.Message):
     if not message.reply_to_message:
         return
     msg_ids = list(range(message.reply_to_message.id, message.id + 1))
-    await app.delete_messages(message.chat.id, msg_ids)
+    try: await app.delete_messages(message.chat.id, msg_ids)
+    except: pass

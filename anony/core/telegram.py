@@ -10,7 +10,7 @@ import time
 from pyrogram import types
 
 from anony import config
-from anony.helpers import Media, buttons, utils
+from anony.helpers import Track, buttons, utils
 
 
 class Telegram:
@@ -39,7 +39,7 @@ class Telegram:
         else:
             await query.answer(query.lang["dl_not_found"], show_alert=True)
 
-    async def download(self, msg: types.Message, sent: types.Message) -> Media | None:
+    async def download(self, msg: types.Message, sent: types.Message) -> Track | None:
         msg_id = sent.id
         event = asyncio.Event()
         self.events[msg_id] = event
@@ -105,7 +105,7 @@ class Telegram:
                     sent.lang["dl_complete"].format(round(time.time() - start_time, 2))
                 )
 
-            return Media(
+            return Track(
                 id=file_id,
                 duration=time.strftime("%M:%S", time.gmtime(duration)),
                 duration_sec=duration,
@@ -123,8 +123,8 @@ class Telegram:
             if file_id in self.active: self.active.remove(file_id)
 
 
-    async def process_m3u8(self, url: str, msg_id: int, video: bool) -> Media:
-        return Media(
+    async def process_m3u8(self, url: str, msg_id: int, video: bool) -> Track:
+        return Track(
             id=str(msg_id),
             file_path=url,
             message_id=msg_id,

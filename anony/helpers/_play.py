@@ -5,10 +5,12 @@
 
 import asyncio
 
+import traceback
+
 from pyrogram import enums, errors, types
 
 from anony import app, config, db, logger, queue, yt
-from anony.helpers import utils, format_exception
+from anony.helpers import utils
 
 
 def checkUB(play):
@@ -81,9 +83,9 @@ def checkUB(play):
                             invite_link = await app.export_chat_invite_link(chat_id)
                     except errors.ChatAdminRequired:
                         return await m.reply_text(m.lang["admin_required"])
-                    except Exception as ex:
+                    except Exception:
                         return await m.reply_text(
-                            m.lang["play_invite_error"].format(format_exception(ex))
+                            m.lang["play_invite_error"].format(traceback.format_exc())
                         )
 
                 umm = await m.reply_text(m.lang["play_invite"].format(app.name))
@@ -93,7 +95,7 @@ def checkUB(play):
                         await client.join_chat(invite_link)
                         break
                     except errors.FloodWait as fw:
-                        logger.warning(f"FloodWait on userbot join: sleeping {fw.value}s")
+                        pass
                         await asyncio.sleep(fw.value + 1)
                     except errors.UserAlreadyParticipant:
                         break
@@ -103,15 +105,15 @@ def checkUB(play):
                             await app.approve_chat_join_request(chat_id, client.id)
                         except errors.HideRequesterMissing:
                             pass
-                        except Exception as ex:
+                        except Exception:
                             return await umm.edit_text(
-                                m.lang["play_invite_error"].format(format_exception(ex))
+                                m.lang["play_invite_error"].format(traceback.format_exc())
                             )
                         break
                     except Exception as ex:
                         logger.error(f"Error joining chat - {chat_id}: {ex}")
                         return await umm.edit_text(
-                            m.lang["play_invite_error"].format(format_exception(ex))
+                            m.lang["play_invite_error"].format(traceback.format_exc())
                         )
                 else:
                     return await umm.edit_text(

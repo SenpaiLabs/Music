@@ -13,7 +13,7 @@ from html import escape
 from pyrogram import filters, types
 
 from anony import anon, app, config, db, lang, userbot
-from anony.helpers import format_exception, meval
+from anony.helpers import meval
 
 
 @app.on_message(filters.command(["eval", "exec"]) & filters.user(app.owner))
@@ -58,15 +58,8 @@ async def eval_handler(_, message: types.Message):
         try:
             result = await meval(code, globals(), **eval_vars)
             return "", result
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            snippet_tb = next(
-                (i for i, f in enumerate(tb) if f.filename == "<string>"), -1
-            )
-            formatted_tb = format_exception(
-                e, tb[snippet_tb:] if snippet_tb != -1 else tb
-            )
-            return message.lang["eval_error"], formatted_tb
+        except Exception:
+            return message.lang["eval_error"], traceback.format_exc()
 
     _, result = await _eval_code()
 
