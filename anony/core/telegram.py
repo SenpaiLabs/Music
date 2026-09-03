@@ -15,24 +15,16 @@ from anony.helpers import Track, buttons, utils
 
 class Telegram:
     def __init__(self):
-        self.active = []
-        self.events = {}
-        self.last_edit = {}
+        self.active = set()
         self.active_tasks = {}
         self.sleep = 5
 
     def get_media(self, msg: types.Message) -> bool:
-        return any([msg.video, msg.audio, msg.document, msg.voice])
+        return bool(msg.video or msg.audio or msg.document or msg.voice)
 
     async def cancel(self, query: types.CallbackQuery):
-        event = self.events.get(query.message.id)
-        task = self.active_tasks.pop(query.message.id, None)
-        if event:
-            event.set()
-
-        if task and not task.done():
+        if (task := self.active_tasks.pop(query.message.id, None)) and not task.done():
             task.cancel()
-        if event or task:
             await query.edit_message_text(
                 query.lang["dl_cancel"].format(query.from_user.mention)
             )
@@ -41,16 +33,14 @@ class Telegram:
 
     async def download(self, msg: types.Message, sent: types.Message) -> Track | None:
         msg_id = sent.id
-        event = asyncio.Event()
-        self.events[msg_id] = event
-        self.last_edit[msg_id] = 0
         start_time = time.time()
+        last_edit = 0
 
         media = msg.audio or msg.voice or msg.video or msg.document
         file_id = getattr(media, "file_unique_id", None)
         file_ext = getattr(media, "file_name", "").split(".")[-1]
         file_size = getattr(media, "file_size", 0)
-        file_title = getattr(media, "title", "Telegram File") or "Telegram File"
+        file_title = getattr(media, "title", None) or "Telegram File"
         duration = getattr(media, "duration", 0)
         video = bool(getattr(media, "mime_type", "").startswith("video/"))
 
@@ -63,17 +53,15 @@ class Telegram:
             return await sent.stop_propagation()
 
         async def progress(current, total):
-            if event.is_set():
-                return
-
+            nonlocal last_edit
             now = time.time()
-            if now - self.last_edit[msg_id] < self.sleep:
+            if now - last_edit < self.sleep:
                 return
 
-            self.last_edit[msg_id] = now
+            last_edit = now
             percent = current * 100 / total
             speed = current / (now - start_time or 1e-6)
-            eta = time.strftime("%H:%M:%S", time.gmtime(int((total - current) / speed)))
+            eta = time.strftime("%H:%M:%S", time.gmtime(int((total - current) / (speed or 1e-6))))
             text = sent.lang["dl_progress"].format(
                 utils.format_size(current),
                 utils.format_size(total),
@@ -93,14 +81,12 @@ class Telegram:
                     await sent.edit_text(sent.lang["dl_active"])
                     return await sent.stop_propagation()
 
-                self.active.append(file_id)
+                self.active.add(file_id)
                 task = asyncio.create_task(
                     msg.download(file_name=file_path, progress=progress)
                 )
                 self.active_tasks[msg_id] = task
                 await task
-                if file_id in self.active: self.active.remove(file_id)
-                self.active_tasks.pop(msg_id, None)
                 await sent.edit_text(
                     sent.lang["dl_complete"].format(round(time.time() - start_time, 2))
                 )
@@ -118,10 +104,8 @@ class Telegram:
         except asyncio.CancelledError:
             return await sent.stop_propagation()
         finally:
-            self.events.pop(msg_id, None)
-            self.last_edit.pop(msg_id, None)
-            if file_id in self.active: self.active.remove(file_id)
-
+            self.active.discard(file_id)
+            self.active_tasks.pop(msg_id, None)
 
     async def process_m3u8(self, url: str, msg_id: int, video: bool) -> Track:
         return Track(

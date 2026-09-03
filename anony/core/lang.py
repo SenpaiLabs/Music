@@ -39,12 +39,8 @@ class Language:
         self.languages = self.load_files()
 
     def load_files(self):
-        languages = {}
-        lang_files = {file.stem: file for file in self.lang_dir.glob("*.json")}
-        for lang_code, lang_file in lang_files.items():
-            with open(lang_file, "r", encoding="utf-8") as file:
-                languages[lang_code] = json.load(file)
-        logger.info(f"Loaded languages: {', '.join(languages.keys())}")
+        languages = {f.stem: json.loads(f.read_text("utf-8")) for f in self.lang_dir.glob("*.json")}
+        logger.info(f"Loaded languages: {', '.join(languages)}")
         return languages
 
     async def get_lang(self, chat_id: int) -> dict:
@@ -58,23 +54,12 @@ class Language:
         def decorator(func):
             @wraps(func)
             async def wrapper(*args, **kwargs):
-                fallen = next(
-                    (
-                        arg
-                        for arg in args
-                        if hasattr(arg, "chat") or hasattr(arg, "message")
-                    ),
-                    None,
-                )
+                fallen = next((a for a in args if hasattr(a, "chat") or hasattr(a, "message")), None)
 
                 if not fallen.from_user:
                     return
 
-                if hasattr(fallen, "chat"):
-                    chat = fallen.chat
-                elif hasattr(fallen, "message"):
-                    chat = fallen.message.chat
-
+                chat = getattr(fallen, "chat", None) or getattr(getattr(fallen, "message", None), "chat", None)
                 if not chat: return
 
                 if chat.id in db.blacklisted:
@@ -87,16 +72,11 @@ class Language:
                 setattr(fallen, "lang", lang_dict)
                 try:
                     return await func(*args, **kwargs)
-                except (errors.FloodWait, errors.SlowmodeWait):
-                    return
                 except (
+                    errors.FloodWait, errors.SlowmodeWait,
                     errors.ChannelInvalid, errors.ChannelPrivate,
                     errors.MessageIdInvalid, errors.MessageNotModified,
-                ):
-                    return
-                except (
-                    errors.Forbidden, errors.exceptions.Forbidden,
-                    errors.ChatWriteForbidden, errors.exceptions.ChatWriteForbidden,
+                    errors.Forbidden, errors.ChatWriteForbidden,
                 ):
                     return
 

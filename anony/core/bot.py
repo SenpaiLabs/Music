@@ -32,10 +32,7 @@ class Bot(pyrogram.Client):
             SystemExit: If the bot fails to access the log group or is not an administrator in the logger group.
         """
         await super().start()
-        self.id = self.me.id
-        self.name = self.me.first_name
-        self.username = self.me.username
-        self.mention = self.me.mention
+        self.id, self.name, self.username, self.mention = self.me.id, self.me.first_name, self.me.username, self.me.mention
 
         try:
             await self.send_message(self.logger, "Bot Started")
