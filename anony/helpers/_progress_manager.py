@@ -9,32 +9,42 @@ import time
 from pyrogram.errors import MessageNotModified, MessageIdInvalid, FloodWait
 from anony.helpers import buttons
 
-class RateLimiter:
-    def __init__(self, max_edits_per_sec=20):
-        self.max_edits_per_sec = max_edits_per_sec
-        self.edits = 0
-        self.last_reset = time.time()
-        self.lock = asyncio.Lock()
+rate_limiter = asyncio.Semaphore(20)
 
-    async def acquire(self):
-        while True:
-            async with self.lock:
-                now = time.time()
-                if now - self.last_reset >= 1.0:
-                    self.edits = 0
-                    self.last_reset = now
-                
-                if self.edits < self.max_edits_per_sec:
-                    self.edits += 1
-                    return
-            await asyncio.sleep(0.1)
 
-rate_limiter = RateLimiter()
+async def _safe_edit_message(app, chat_id: int, message_id: int, text: str, markup) -> bool:
+    """
+    Attempt to edit message text first, falling back to editing caption if needed.
+    Returns False if message ID is invalid (signaling the chat loop should stop).
+    """
+    async with rate_limiter:
+        for edit_fn, kwargs in (
+            (app.edit_message_text, {"text": text, "disable_web_page_preview": True}),
+            (app.edit_message_caption, {"caption": text}),
+        ):
+            try:
+                await edit_fn(
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    reply_markup=markup,
+                    **kwargs,
+                )
+                return True
+            except MessageNotModified:
+                return True
+            except MessageIdInvalid:
+                return False
+            except FloodWait as e:
+                await asyncio.sleep(e.value)
+                return True
+            except Exception:
+                continue
+    return True
 
 
 class ProgressManager:
     def __init__(self):
-        self.active_chats = {} # chat_id -> asyncio.Task
+        self.active_chats = {}  # chat_id -> asyncio.Task
 
     def register(self, chat_id: int):
         self.deregister(chat_id)
@@ -59,14 +69,14 @@ class ProgressManager:
         timer = bar
 
         try:
-            await rate_limiter.acquire()
-            await app.edit_message_reply_markup(
-                chat_id=chat_id,
-                message_id=media.message_id,
-                reply_markup=buttons.controls(
-                    chat_id=chat_id, timer=timer, autoplay=None, remove=True
+            async with rate_limiter:
+                await app.edit_message_reply_markup(
+                    chat_id=chat_id,
+                    message_id=media.message_id,
+                    reply_markup=buttons.controls(
+                        chat_id=chat_id, timer=timer, autoplay=None, remove=True
+                    ),
                 )
-            )
         except MessageNotModified:
             pass
         except FloodWait as e:
@@ -76,9 +86,9 @@ class ProgressManager:
 
     async def _chat_loop(self, chat_id: int):
         from anony import app, db, lang, queue, yt
-        
+
         last_text = ""
-        
+
         try:
             while True:
                 await asyncio.sleep(random.uniform(4.0, 7.0))
@@ -116,51 +126,19 @@ class ProgressManager:
                     f"{time.strftime('%M:%S', time.gmtime(played))} / {media.duration}",
                     media.user,
                 )
-                
+
                 if text == last_text:
                     continue
-                
+
                 markup = buttons.controls(
                     chat_id=chat_id, timer=None, autoplay=autoplay, remove=False
                 )
 
-                await rate_limiter.acquire()
-
-                try:
-                    await app.edit_message_text(
-                        chat_id=chat_id,
-                        message_id=media.message_id,
-                        text=text,
-                        reply_markup=markup,
-                        disable_web_page_preview=True
-                    )
-                    last_text = text
-                except MessageNotModified:
-                    last_text = text
-                except MessageIdInvalid:
+                success = await _safe_edit_message(app, chat_id, media.message_id, text, markup)
+                if not success:
                     self.deregister(chat_id)
                     return
-                except FloodWait as e:
-                    await asyncio.sleep(e.value)
-                except Exception:
-                    await rate_limiter.acquire()
-                    try:
-                        await app.edit_message_caption(
-                            chat_id=chat_id,
-                            message_id=media.message_id,
-                            caption=text,
-                            reply_markup=markup,
-                        )
-                        last_text = text
-                    except MessageNotModified:
-                        last_text = text
-                    except MessageIdInvalid:
-                        self.deregister(chat_id)
-                        return
-                    except FloodWait as e:
-                        await asyncio.sleep(e.value)
-                    except Exception:
-                        pass
+                last_text = text
 
         except asyncio.CancelledError:
             pass
@@ -171,5 +149,6 @@ class ProgressManager:
         """Gracefully stop all chat loops."""
         for chat_id in list(self.active_chats):
             self.deregister(chat_id)
+
 
 progress_manager = ProgressManager()

@@ -1,18 +1,14 @@
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus
 from anony import app, lang
+from anony.helpers import is_admin
 import asyncio
 
 stop_tag = {}
 
-async def is_admin(m):
-    member = await m.chat.get_member(m.from_user.id)
-    return member.status in (ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR)
-
 @app.on_message(filters.command(["mention", "tag", "tagall"]) & filters.group)
 @lang.language()
 async def tagall(_, m):
-    if not await is_admin(m):
+    if not await is_admin(m.chat.id, m.from_user.id):
         return await m.reply(m.lang["user_not_admin"])
     stop_tag[m.chat.id] = False
     users = [u.user.mention async for u in m.chat.get_members() if not u.user.is_bot]
@@ -27,7 +23,7 @@ async def tagall(_, m):
 @app.on_message(filters.command(["cancel", "stoptag", "canceltag"]) & filters.group)
 @lang.language()
 async def cancel(_, m):
-    if not await is_admin(m):
+    if not await is_admin(m.chat.id, m.from_user.id):
         return await m.reply(m.lang["user_not_admin"])
     stop_tag[m.chat.id] = True
     await m.reply(m.lang["t_stp"])

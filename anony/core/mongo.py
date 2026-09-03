@@ -9,7 +9,6 @@ from random import randint
 from time import time
 
 from pymongo import AsyncMongoClient, UpdateOne
-from cachetools import TTLCache
 
 from anony import config, logger, userbot
 
@@ -25,7 +24,7 @@ class MongoDB:
         self.song_cache_mongo = AsyncMongoClient(config.SONG_CACHE_MONGO_URI, serverSelectionTimeoutMS=12500)
         self.song_cache_db = self.song_cache_mongo.AnonSongCache
 
-        self.admin_list = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
+        self.admin_list = {}  # {chat_id: (admins, expire_time)}
         self.active_calls = {}
         self.admin_play = []
         self.autoplay = []
@@ -39,7 +38,7 @@ class MongoDB:
         self.assistant = {}
         self.assistantdb = self.db.assistant
 
-        self.auth = TTLCache(maxsize=100000, ttl=43200)  # 12h TTL
+        self.auth = {}  # {chat_id: (user_ids_set, expire_time)}
         self.authdb = self.db.auth
 
         self.chats = []
@@ -217,11 +216,14 @@ class MongoDB:
         return bool(self.active_calls.get(chat_id, 0))
 
     async def get_admins(self, chat_id: int, reload: bool = False) -> list[int]:
-        from anony.core.admins import reload_admins
+        from anony.helpers import reload_admins
 
-        if chat_id not in self.admin_list or reload:
-            self.admin_list[chat_id] = await reload_admins(chat_id)
-        return self.admin_list[chat_id]
+        cached = self.admin_list.get(chat_id)
+        if not cached or reload or time() > cached[1]:
+            admins = await reload_admins(chat_id)
+            self.admin_list[chat_id] = (admins, time() + 43200)
+            return admins
+        return cached[0]
 
     async def get_loop(self, chat_id: int) -> int:
         return self.loop.get(chat_id, 0)
@@ -231,10 +233,13 @@ class MongoDB:
 
     # AUTH METHODS
     async def _get_auth(self, chat_id: int) -> set[int]:
-        if chat_id not in self.auth:
+        cached = self.auth.get(chat_id)
+        if not cached or time() > cached[1]:
             doc = await self.authdb.find_one({"_id": chat_id}) or {}
-            self.auth[chat_id] = set(doc.get("user_ids", []))
-        return self.auth[chat_id]
+            users = set(doc.get("user_ids", []))
+            self.auth[chat_id] = (users, time() + 43200)
+            return users
+        return cached[0]
 
     async def is_auth(self, chat_id: int, user_id: int) -> bool:
         return user_id in await self._get_auth(chat_id)
@@ -288,7 +293,9 @@ class MongoDB:
             num = await self.set_assistant(chat_id)
             self.assistant[chat_id] = num
 
-        return {1: userbot.one, 2: userbot.two, 3: userbot.three}.get(num)
+        if 1 <= num <= len(userbot.clients):
+            return userbot.clients[num - 1]
+        return None
 
     # BLACKLIST METHODS
     async def add_blacklist(self, chat_id: int) -> None:

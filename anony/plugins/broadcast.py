@@ -3,7 +3,7 @@
 # This file is part of AnonXMusic
 
 
-import os
+import io
 import asyncio
 
 from pyrogram import errors, filters, types
@@ -85,18 +85,16 @@ async def _broadcast(_, message: types.Message):
         count = stats["count"]
         ucount = stats["ucount"]
 
+        failed_bio = None
         if failed_list:
-            failed = open("errors.txt", "w")
-            failed.writelines(failed_list)
+            failed_bio = io.BytesIO("".join(failed_list).encode())
+            failed_bio.name = "errors.txt"
 
     text = message.lang["gcast_end"].format(count, ucount)
-    if failed:
-        failed.close()
+    if failed_bio:
         await message.reply_document(
-            document="errors.txt",
+            document=failed_bio,
             caption=text,
         )
-        try: os.remove("errors.txt")
-        except Exception: pass
 
     await sent.edit_text(text)

@@ -13,5 +13,5 @@ anony/cookies/*.txt
 *.session-journal
 .agents/
 anony/plugins/backup.py
-.claude/agents/*.md
-.claude/reviews/
+.claude/
+.antigravity/

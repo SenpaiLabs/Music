@@ -18,7 +18,7 @@ from pytgcalls.pytgcalls_session import PyTgCallsSession
 
 from anony import (app, config, db, lang, logger,
                    queue, userbot, yt)
-from anony.helpers import Media, Track, buttons, utils, progress_manager
+from anony.helpers import Track, buttons, utils, progress_manager
 
 
 class TgCall:
@@ -73,7 +73,7 @@ class TgCall:
         self,
         chat_id: int,
         message: Message,
-        media: Media | Track,
+        media: Track,
         seek_time: int = 0,
         attempt: int = 0,
     ) -> None:

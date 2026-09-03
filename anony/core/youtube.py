@@ -14,7 +14,6 @@ import contextlib
 from pathlib import Path
 from difflib import SequenceMatcher
 
-from py_yt import Playlist
 
 from anony import logger
 from anony.helpers import Track, utils
@@ -124,18 +123,33 @@ class YouTube:
     async def playlist(self, limit: int, user: str, url: str, video: bool) -> list[Track | None]:
         tracks = []
         try:
-            plist = await Playlist.get(url)
-            for data in plist["videos"][:limit]:
+            def _extract():
+                cookie = self.get_cookies()
+                opts = {"extract_flat": True, "playlistend": limit, "quiet": True}
+                if cookie:
+                    opts["cookiefile"] = cookie
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(url, download=False)
+
+            info = await asyncio.to_thread(_extract)
+            if not info or "entries" not in info:
+                return tracks
+
+            for data in info["entries"][:limit]:
+                if not data:
+                    continue
+                vid = data.get("id")
+                dur = int(data.get("duration") or 0)
                 track = Track(
-                    id=data.get("id"),
-                    channel_name=data.get("channel", {}).get("name", ""),
-                    duration=data.get("duration"),
-                    duration_sec=sum(int(x) * 60**i for i, x in enumerate(reversed(str(data.get("duration") or "0").split(":")))),
-                    title=data.get("title")[:25],
-                    thumbnail=data.get("thumbnails")[-1].get("url").split("?")[0],
-                    url=data.get("link").split("&list=")[0],
+                    id=vid,
+                    channel_name=data.get("uploader") or "",
+                    duration=time.strftime("%M:%S", time.gmtime(dur)),
+                    duration_sec=dur,
+                    title=data.get("title", "")[:25],
+                    thumbnail=data.get("thumbnail", "").split("?")[0] if data.get("thumbnail") else "",
+                    url=self.base + vid if vid else "",
                     user=user,
-                    view_count="",
+                    view_count=str(data.get("view_count", "")),
                     video=video,
                 )
                 tracks.append(track)

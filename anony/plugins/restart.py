@@ -10,8 +10,9 @@ import asyncio
 
 from pyrogram import filters, types
 
+import traceback
+
 from anony import app, db, lang, logger, stop
-from anony.helpers import format_exception
 
 
 @app.on_message(filters.command(["logs"]) & app.sudoers)
@@ -58,8 +59,8 @@ async def _restart(_, m: types.Message):
         await asyncio.wait([task], timeout=30)
     except asyncio.CancelledError:
         pass
-    except Exception as e:
-        logger.error(f"Error during shutdown before restart:\n{format_exception(e)}")
+    except Exception:
+        logger.error(f"Error during shutdown before restart:\n{traceback.format_exc()}")
 
     try: os.remove("log.txt")
     except Exception: pass

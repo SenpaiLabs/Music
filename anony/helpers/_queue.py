@@ -4,25 +4,25 @@
 
 
 from collections import defaultdict, deque
-from typing import Union
+from typing import Optional
 
-from ._dataclass import Media, Track
+from ._dataclass import Track
 
-MediaItem = Union[Media, Track]
+MediaItem = Track
 
 
 class Queue:
     def __init__(self):
-        self.queues: dict[int, deque[MediaItem]] = defaultdict(deque)
+        self.queues: dict[int, deque[Track]] = defaultdict(deque)
         self.history: dict[int, deque[str]] = defaultdict(lambda: deque(maxlen=20))
-        self.prefetched: dict[int, MediaItem] = {}
+        self.prefetched: dict[int, Track] = {}
 
-    def add(self, chat_id: int, item: MediaItem) -> int:
+    def add(self, chat_id: int, item: Track) -> int:
         """Add an item to the queue and return its position (1-based)."""
         self.queues[chat_id].append(item)
         return len(self.queues[chat_id]) - 1
 
-    def check_item(self, chat_id: int, item_id: str) -> tuple[int, MediaItem | None]:
+    def check_item(self, chat_id: int, item_id: str) -> tuple[int, Optional[Track]]:
         """Check if an item with the given ID exists in the queue."""
         pos, track = next(
             (
@@ -35,7 +35,7 @@ class Queue:
         return pos, track
 
     def force_add(
-        self, chat_id: int, item: MediaItem, remove: int | bool = False
+        self, chat_id: int, item: Track, remove: int | bool = False
     ) -> None:
         """Replace the currently playing item with a new one."""
         self.remove_current(chat_id)
@@ -43,11 +43,11 @@ class Queue:
         if remove:
             del self.queues[chat_id][remove]
 
-    def get_current(self, chat_id: int) -> MediaItem | None:
+    def get_current(self, chat_id: int) -> Optional[Track]:
         """Return the currently playing item (first in queue), if any."""
         return self.queues[chat_id][0] if self.queues[chat_id] else None
 
-    def get_next(self, chat_id: int, check: bool = False) -> MediaItem | None:
+    def get_next(self, chat_id: int, check: bool = False) -> Optional[Track]:
         """Remove current item and return the next one, or None if empty."""
         if not self.queues[chat_id]:
             return None
@@ -57,7 +57,7 @@ class Queue:
         self.queues[chat_id].popleft()
         return self.queues[chat_id][0] if self.queues[chat_id] else None
 
-    def get_queue(self, chat_id: int) -> list[MediaItem]:
+    def get_queue(self, chat_id: int) -> list[Track]:
         """Return the full queue including the currently playing item."""
         return list(self.queues[chat_id])
 
@@ -75,11 +75,11 @@ class Queue:
         """Return the set of recently played video IDs for a chat."""
         return set(self.history[chat_id])
 
-    def set_prefetched_autoplay(self, chat_id: int, item: MediaItem) -> None:
+    def set_prefetched_autoplay(self, chat_id: int, item: Track) -> None:
         """Store a prefetched autoplay track for a chat."""
         self.prefetched[chat_id] = item
 
-    def get_prefetched_autoplay(self, chat_id: int) -> MediaItem | None:
+    def get_prefetched_autoplay(self, chat_id: int) -> Optional[Track]:
         """Retrieve and remove the prefetched autoplay track for a chat."""
         return self.prefetched.pop(chat_id, None)
 

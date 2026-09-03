@@ -11,9 +11,10 @@ from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait, ChatAdminRequired
 from pyrogram.types import Message
 
+import traceback
+
 from anony import app, lang, config
-from anony.helpers import format_exception
-from anony.core.admins import reload_admins
+from anony.helpers import reload_admins
 
 active_ops: dict[int, str] = {}
 
@@ -216,8 +217,8 @@ async def purge_chat(message: Message, target_chat_id: int, op: str, is_test: bo
 
     except ChatAdminRequired:
         await progress.edit_text(message.lang["purge_admin_req"])
-    except Exception as e:
-        await progress.edit_text(message.lang["purge_error"].format(format_exception(e)))
+    except Exception:
+        await progress.edit_text(message.lang["purge_error"].format(traceback.format_exc()))
     finally:
         active_ops.pop(target_chat_id, None)
 
